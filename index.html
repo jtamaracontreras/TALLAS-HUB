@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Playeras del evento — Conteo y captura de tallas</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#20252c;--ink-2:#3a4149;--paper:#f5f5f4;--card:#ffffff;
+    --line:#e5e3df;--line-strong:#cfccc6;
+    --cobalt:#fd730e;--cobalt-soft:#ffe9d6;   /* naranja HU (se conserva el nombre para el resto del código) */
+    --violet:#c0562a;--violet-soft:#f6e4da;
+    --green:#1f7a5c;--green-soft:#e2f3ec;
+    --amber:#b57612;--amber-soft:#fbf1dc;
+    --red:#c0392b;--red-soft:#fbe7e4;
+    --muted:#7a7a74;
+    --wm-url:url("data:image/png;base64,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");
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:'Inter',system-ui,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto;padding:22px 18px 90px}
+  h1,h2,h3{font-family:'Space Grotesk',sans-serif;margin:0}
+  .num{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums}
+
+  .head{background:var(--ink);color:#fff;border-radius:16px;padding:22px 24px 24px;margin-bottom:18px;overflow:hidden}
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--cobalt);font-weight:600}
+  .head h1{font-size:30px;font-weight:700;letter-spacing:-.01em;margin:4px 0 2px;color:#fff}
+  .head p{margin:0;color:rgba(255,255,255,.72);font-size:14px}
+  .chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+  .chip{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;min-width:120px}
+  .chip .k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .chip .v{font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;line-height:1.1;margin-top:2px;color:var(--ink)}
+  .chip.h .v{color:var(--cobalt)} .chip.m .v{color:var(--violet)}
+
+  .tabs{display:flex;gap:6px;margin:22px 0 16px;border-bottom:2px solid var(--line)}
+  .tab{appearance:none;border:none;background:none;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;color:var(--muted);padding:10px 14px;border-bottom:3px solid transparent;margin-bottom:-2px;display:flex;align-items:center;gap:8px}
+  .tab .n{font-family:'IBM Plex Mono',monospace;font-size:12px;background:var(--line);color:var(--ink-2);border-radius:6px;padding:1px 7px}
+  .tab.active{color:var(--ink);border-bottom-color:var(--cobalt)}
+  .tab.active .n{background:var(--cobalt);color:#fff}
+  .view{display:none} .view.active{display:block}
+
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+  .search{flex:1;min-width:200px;position:relative}
+  .search input{width:100%;border:1px solid var(--line-strong);border-radius:10px;padding:9px 12px 9px 34px;font:inherit;background:var(--card)}
+  .search input:focus{outline:2px solid var(--cobalt-soft);border-color:var(--cobalt)}
+  .search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted)}
+  select.flt{border:1px solid var(--line-strong);border-radius:10px;padding:9px 12px;font:inherit;background:var(--card);color:var(--ink);max-width:230px}
+  select.flt:focus{outline:2px solid var(--cobalt-soft);border-color:var(--cobalt)}
+  .btn{appearance:none;cursor:pointer;font:inherit;font-weight:600;border-radius:10px;padding:9px 14px;border:1px solid var(--line-strong);background:var(--card);color:var(--ink);display:inline-flex;align-items:center;gap:7px}
+  .btn:hover{border-color:var(--cobalt);color:var(--cobalt)}
+  .btn.primary{background:var(--cobalt);border-color:var(--cobalt);color:#fff}
+  .btn.primary:hover{background:#d95f00}
+  .btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+  .btn.ghost:hover{color:var(--red)}
+
+  /* conteo */
+  .region{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:10px;overflow:hidden}
+  .region-head{display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;user-select:none}
+  .region-head:hover{background:#fafbfe}
+  .region-head .name{font-family:'Space Grotesk';font-weight:600;font-size:17px;flex:1;display:flex;align-items:center;gap:10px}
+  .chev{transition:transform .18s ease;color:var(--muted)}
+  .region.open .chev{transform:rotate(90deg)}
+  .mini{display:flex;gap:16px;align-items:center}
+  .mini .cell{text-align:right;min-width:52px}
+  .mini .lbl{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;display:block}
+  .mini .val{font-family:'IBM Plex Mono';font-weight:600;font-size:16px}
+  .val.h{color:var(--cobalt)} .val.m{color:var(--violet)}
+  .region-body{display:none;border-top:1px solid var(--line)} .region.open .region-body{display:block}
+  table{width:100%;border-collapse:collapse}
+  .conteo-t th,.conteo-t td{padding:9px 16px;text-align:right;font-size:14px;border-bottom:1px solid var(--line)}
+  .conteo-t th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;background:#fafbfe}
+  .conteo-t th:first-child,.conteo-t td:first-child{text-align:left}
+  .conteo-t td:first-child{font-weight:500}
+  .conteo-t tr:last-child td{border-bottom:none}
+  .conteo-t td.num{font-family:'IBM Plex Mono'}
+  .conteo-t tfoot td{font-weight:700;background:#f4f6f9;border-top:2px solid var(--line-strong)}
+  .grand{background:var(--ink);color:#fff;border-radius:14px;padding:16px 18px;margin-top:14px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+  .grand .t{font-family:'Space Grotesk';font-weight:600;font-size:16px;flex:1}
+  .grand .cell{text-align:right}
+  .grand .lbl{font-size:10px;letter-spacing:.1em;text-transform:uppercase;opacity:.7;font-weight:600;display:block}
+  .grand .v{font-family:'IBM Plex Mono';font-size:22px;font-weight:600}
+
+  /* captura por persona */
+  .savebar{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-left:auto}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--green)} .dot.saving{background:var(--amber)}
+  .filterbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+  .note{background:var(--cobalt-soft);border:1px solid #f6cfae;color:var(--ink-2);border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:12px;display:flex;gap:9px;align-items:flex-start}
+  /* pantalla de acceso */
+  #gate{position:fixed;inset:0;background:var(--ink);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
+  #gate.hidden{display:none}
+  .gate-card{background:var(--card);border-radius:16px;padding:30px 26px;max-width:360px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+  .gate-card .eyebrow{color:var(--cobalt);justify-content:center;margin-bottom:6px}
+  .gate-card h2{font-family:'Space Grotesk';font-size:22px;margin:0 0 4px}
+  .gate-card p{color:var(--muted);font-size:13px;margin:0 0 18px}
+  .gate-card input{width:100%;border:1px solid var(--line-strong);border-radius:10px;padding:11px 12px;font:inherit;text-align:center;margin-bottom:10px}
+  .gate-card input:focus{outline:2px solid var(--cobalt-soft);border-color:var(--cobalt)}
+  .gate-card .err{color:var(--red);font-size:13px;font-weight:600;min-height:18px;margin-bottom:4px}
+  .gate-card button{width:100%;background:var(--cobalt);color:#fff;border:none;border-radius:10px;padding:11px;font:inherit;font-weight:600;cursor:pointer}
+  .gate-card button:hover{background:#d95f00}
+  .gate-logo{width:96px;height:auto;display:block;margin:0 auto 14px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.25))}
+  /* marca de agua con el logo HU */
+  .wm{position:relative}
+  .wm::before{content:"";position:absolute;inset:0;background-image:var(--wm-url);background-repeat:no-repeat;background-position:center;background-size:contain;opacity:.06;pointer-events:none;z-index:0}
+  .wm > *{position:relative;z-index:1}
+  .head.wm::before{background-position:right -20px top -30px;background-size:auto 190%;opacity:.13}
+  .gate-alt{margin-top:14px}
+  .gate-alt a{color:var(--muted);font-size:13px;text-decoration:none;border-bottom:1px dotted var(--muted)}
+  .gate-alt a:hover{color:var(--cobalt);border-color:var(--cobalt)}
+  .emp-card.wm::before{opacity:.10;background-size:82%}
+  #emp-view{min-height:100vh;background:var(--paper);display:flex;align-items:center;justify-content:center;padding:20px}
+  .emp-wrap{max-width:440px;width:100%;text-align:center}
+  .emp-title{font-family:'Space Grotesk';font-size:26px;margin:4px 0 18px;color:var(--ink)}
+  .emp-card{background:var(--ink);border:1px solid #333a43;border-radius:16px;padding:26px 22px;box-shadow:0 14px 44px rgba(0,0,0,.28)}
+  .emp-name{font-family:'Space Grotesk';font-weight:600;font-size:20px;color:#fff}
+  .emp-meta{color:rgba(255,255,255,.6);font-size:13px;margin-top:2px;margin-bottom:20px}
+  .emp-label{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--cobalt);font-weight:700;margin-bottom:10px}
+  .emp-seg{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+  .emp-seg button{appearance:none;border:1px solid #454d57;background:#2b323b;cursor:pointer;font-family:'IBM Plex Mono';font-weight:600;font-size:16px;color:#e7e9ec;width:56px;height:52px;border-radius:12px}
+  .emp-seg button:hover{border-color:var(--cobalt);color:var(--cobalt)}
+  .emp-seg button.sel{background:var(--cobalt);color:#20252c;border-color:var(--cobalt)}
+  .emp-seg.locked button{cursor:default;opacity:.4}
+  .emp-seg.locked button.sel{opacity:1}
+  .emp-seg.locked button:hover{border-color:#454d57;color:#e7e9ec}
+  .emp-seg.locked button.sel:hover{background:var(--cobalt);color:#20252c}
+  .emp-save{width:100%;background:var(--cobalt);color:#20252c;border:none;border-radius:10px;padding:12px;font:inherit;font-weight:700;cursor:pointer}
+  .emp-save:hover{background:#ff8a33}
+  .emp-save:disabled{background:#3a424c;color:#7a828d;cursor:default}
+  .emp-saved{display:flex;align-items:center;justify-content:center;gap:10px;background:rgba(253,115,14,.15);color:var(--cobalt);border-radius:10px;padding:12px;font-weight:600}
+  .emp-edit{appearance:none;border:1px solid #454d57;background:#2b323b;cursor:pointer;border-radius:9px;padding:8px 10px;display:inline-flex;align-items:center;gap:6px;color:#e7e9ec;font:inherit;font-weight:600;font-size:13px;margin-left:6px}
+  .emp-edit:hover{border-color:var(--cobalt);color:var(--cobalt)}
+  .emp-exit{margin-top:16px;background:none;border:none;color:var(--muted);cursor:pointer;font:inherit;font-size:13px;border-bottom:1px dotted var(--muted)}
+  .emp-exit:hover{color:var(--cobalt);border-color:var(--cobalt)}
+  .counter{font-size:13px;color:var(--muted);margin:0 0 12px;display:flex;gap:14px;flex-wrap:wrap}
+  .counter b{color:var(--ink);font-family:'IBM Plex Mono'}
+  .counter .pend{color:var(--amber)}
+
+  .plist{display:flex;flex-direction:column;gap:8px}
+  .prow{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .prow.done{border-color:#bfe0d2;background:#fbfefc}
+  .pinfo{flex:1;min-width:220px}
+  .pname{font-weight:600;font-size:15px;display:flex;align-items:center;gap:8px}
+  .pmeta{font-size:12px;color:var(--muted);margin-top:1px}
+  .badge{font-size:10px;font-weight:700;border-radius:5px;padding:1px 6px;font-family:'IBM Plex Mono'}
+  .badge.h{background:var(--cobalt-soft);color:var(--cobalt)} .badge.m{background:var(--violet-soft);color:var(--violet)} .badge.o{background:#eceff4;color:var(--muted)}
+  .seg{display:inline-flex;border:1px solid var(--line-strong);border-radius:9px;overflow:hidden;flex-shrink:0}
+  .seg button{appearance:none;border:none;background:#fff;cursor:pointer;font-family:'IBM Plex Mono';font-weight:600;font-size:14px;color:var(--ink-2);padding:7px 0;width:46px;border-right:1px solid var(--line)}
+  .seg button:last-child{border-right:none}
+  .seg button:hover{background:var(--cobalt-soft)}
+  .seg button.sel{background:var(--cobalt);color:#fff}
+  .clr{appearance:none;border:none;background:none;cursor:pointer;color:var(--muted);font-size:18px;line-height:1;padding:4px 6px;border-radius:6px;flex-shrink:0}
+  .clr:hover{color:var(--red);background:var(--red-soft)}
+  .clr[hidden]{display:none}
+  .empty{text-align:center;color:var(--muted);padding:40px 16px;background:var(--card);border:1px dashed var(--line-strong);border-radius:12px}
+
+  .resumen{margin-top:18px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+  .resumen h3{font-size:16px;margin-bottom:2px}
+  .resumen p{color:var(--muted);font-size:13px;margin:0 0 14px}
+  .res-t th,.res-t td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:center;font-family:'IBM Plex Mono';font-weight:600}
+  .res-t th{font-family:'Inter';font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:700;background:#fafbfe}
+  .res-t td:first-child,.res-t th:first-child{text-align:left;font-family:'Inter'}
+  .res-t tr.tot td{font-weight:700;background:#f4f6f9;border-top:2px solid var(--line-strong)}
+  .res-t td.big{font-size:16px}
+
+  @media(max-width:560px){
+    .head h1{font-size:24px}
+    .chip{flex:1;min-width:0}
+    select.flt{max-width:none;flex:1}
+    .prow{gap:10px}
+    .seg button{width:40px;font-size:13px}
+  }
+</style>
+</head>
+<body>
+<div id="gate">
+  <div class="gate-card">
+    <img class="gate-logo" src="data:image/png;base64,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" alt="Hogares Unión">
+    <div class="eyebrow">Queremos conocer tu talla</div>
+    <!-- modo empleado -->
+    <div id="gate-emp">
+      <h2>Registra tu talla</h2>
+      <p>Escribe tu correo institucional para ver y elegir tu talla.</p>
+      <input id="gate-email" type="email" placeholder="tucorreo@empresa.mx" autocomplete="off">
+      <div class="err" id="gate-err"></div>
+      <button id="gate-emp-btn">Entrar</button>
+      <div class="gate-alt"><a href="#" id="go-admin">Soy administrador</a></div>
+    </div>
+    <!-- modo admin -->
+    <div id="gate-adm" style="display:none">
+      <h2>Acceso administrador</h2>
+      <p>Escribe la contraseña de administrador.</p>
+      <input id="gate-pass" type="password" placeholder="Contraseña" autocomplete="off">
+      <div class="err" id="gate-err2"></div>
+      <button id="gate-adm-btn">Entrar</button>
+      <div class="gate-alt"><a href="#" id="go-emp">Soy empleado</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- vista individual del empleado -->
+<div id="emp-view" style="display:none">
+  <div class="emp-wrap">
+    <div class="eyebrow" style="color:var(--cobalt)">Queremos conocer tu talla</div>
+    <h1 class="emp-title">Tu talla</h1>
+    <div class="emp-card wm" id="emp-card"></div>
+    <button class="emp-exit" id="emp-exit">Salir</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="head wm">
+    <div class="eyebrow">Queremos conocer tu talla</div>
+    <h1>Conteo y captura de tallas</h1>
+    <p>Cuenta la plantilla por región y área, y captura la talla de cada persona.</p>
+    <div class="chips">
+      <div class="chip"><span class="k">Empleados</span><span class="v num" id="c-total">0</span></div>
+      <div class="chip h"><span class="k">Hombres</span><span class="v num" id="c-h">0</span></div>
+      <div class="chip m"><span class="k">Mujeres</span><span class="v num" id="c-m">0</span></div>
+      <div class="chip"><span class="k">Regiones</span><span class="v num" id="c-reg">0</span></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-view="conteo"><span class="n">1</span> Conteo por región</button>
+    <button class="tab" data-view="tallas"><span class="n">2</span> Captura de tallas</button>
+  </div>
+
+  <!-- VIEW 1 -->
+  <section class="view active" id="view-conteo">
+    <div class="toolbar">
+      <div class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="search-c" type="text" placeholder="Buscar región o área…">
+      </div>
+      <button class="btn" id="expand-all">Expandir todo</button>
+      <button class="btn" id="collapse-all">Contraer todo</button>
+    </div>
+    <div id="regions"></div>
+    <div class="grand">
+      <span class="t">Total general de la empresa</span>
+      <div class="cell"><span class="lbl">Hombres</span><span class="v num" id="g-h">0</span></div>
+      <div class="cell"><span class="lbl">Mujeres</span><span class="v num" id="g-m">0</span></div>
+      <div class="cell"><span class="lbl">Total</span><span class="v num" id="g-t">0</span></div>
+    </div>
+  </section>
+
+  <!-- VIEW 2 -->
+  <section class="view" id="view-tallas">
+    <div class="filterbar">
+      <div class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="search-p" type="text" placeholder="Buscar por nombre…">
+      </div>
+      <select class="flt" id="f-region"></select>
+      <select class="flt" id="f-area"></select>
+      <select class="flt" id="f-status">
+        <option value="all">Todas</option>
+        <option value="pend">Sin talla</option>
+        <option value="done">Con talla</option>
+      </select>
+      <button class="btn" id="refresh">Actualizar</button>
+      <div class="savebar"><span class="dot" id="save-dot"></span><span id="save-txt">Guardado</span></div>
+    </div>
+    <div class="note">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span><b>Base compartida en tiempo real:</b> todo lo que capture cualquier persona con acceso se guarda en una sola base común y aparece al instante para los demás. Si algo no se actualiza, toca <b>Actualizar</b>.</span>
+    </div>
+    <div class="counter">
+      <span>Mostrando <b id="cnt-shown">0</b> de <b id="cnt-total">0</b> personas</span>
+      <span class="pend">Sin talla: <b id="cnt-pend">0</b></span>
+    </div>
+    <div class="plist" id="plist"></div>
+
+    <div class="resumen">
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px">
+        <div style="flex:1;min-width:200px">
+          <h3>Resumen del pedido</h3>
+          <p style="margin:0">Total de playeras por talla — según lo capturado. Esto es lo que entregas a compras.</p>
+        </div>
+        <button class="btn primary" id="export-xlsx">Exportar a Excel</button>
+        <button class="btn" id="export-csv">Exportar CSV</button>
+        <button class="btn ghost" id="reset">Borrar tallas</button>
+      </div>
+      <table class="res-t">
+        <thead id="res-head"></thead>
+        <tbody id="res-body"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script>
+const DATA = {"people": [{"n": "Aime Andrea Lugo Hernandez", "e": "a.lugo.hernandez@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Alberto Jeronimo Mendoza Vazquez", "e": "almendozav@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Alma Aide Juarez Malpica", "e": "aajuarezm@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Alma Rosa Martinez Duran", "e": "amartinezd@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Alvaro Rolando Cabriada Arzola", "e": "acabriada@dap.com.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Director Regional Centro"}, {"n": "Ana Fabiola Gutierrez Velazquez", "e": "a.gutierrez.velazquez@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Ana Karen Castillo Morales", "e": "acastillo@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Ana Karen Del Alto Nepomuseno", "e": "adelalto@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Ana Patricia Campos Nader", "e": "a.campos.nader@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Andrea Jessica Martinez Abad", "e": "a.martinez.abad@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Angelica Hernandez Martinez", "e": "a.hernandez.martinez@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Ania Itzel Mawampy Flores Rule", "e": "a.floresr@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Arabia Lopez Rodriguez", "e": "arlopez@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Araceli Santillan Velez", "e": "a.santillan.velez@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Argentina Dorantes Ramirez", "e": "a.dorantes@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Avelino Soria Galicia", "e": "a.soria.galicia@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Ayesha Lugo Moreno", "e": "a.lugo@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Azucena Nieto Salazar", "e": "anieto@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Badyr Ulises Rodriguez Perez", "e": "b.rodriguez.perez@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Blanca Rosa Martinez Chavez", "e": "brmartinezc@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Brenda Gomez Cruz", "e": "b.gomez.cruz@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Brenda Itzel Valle Garcia", "e": "b.valle.garcia@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Candido Austria Garcia", "e": "caustria@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Gerente Regional Hidalgo"}, {"n": "Carlos Roberto Martinez Cruz", "e": "c.martinez.cruz@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Carolina Ramirez Velazquez", "e": "c.ramirez.velazquez@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Cesar Israel Mendoza Perez", "e": "cmendoza@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Christian Xavier Montaño Alba", "e": "xalba@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Ciomara Hernandez Silva", "e": "c.hernandez.silva@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Claudia Edith Martinez Ramirez", "e": "c.martinez.ramirez@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Daniel Jimenez Camargo", "e": "d.jimenez@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "David Barrera Alcocer", "e": "d.barrera.alcocer@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Deyanira Perez Gonzalez", "e": "dperezg@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Diana Osiris Garcia Paredes", "e": "d.garciap@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Diana Rivero Mondragon", "e": "d.rivero.mondragon@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Dominga Sesma Alvarado", "e": "dsesma@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Dulce Montserrat Vera Barajas", "e": "dvera@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Lider De Unidad De Negocio"}, {"n": "Eber Cortes Omaña", "e": "e.cortes.omana@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Eddie Hi Lopez", "e": "e.hi.lopez@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Eduardo Gonzalez Bobadilla", "e": "e.gonzalez@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Elizabeth Huerta Lopez", "e": "e.huerta.lopez@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Elizabeth Montoya Hernandez", "e": "e.montoya.hernandez@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Elizabeth Ortiz De La Palma", "e": "e.ortizp@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Elizabeth Sanchez Correu", "e": "e.sanchez@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Elvira Alein Vicent Yañez", "e": "e.vicent.yanez@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Ericka De Jesus Serrano Mendez", "e": "e.serrano.mendez@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Ericka Viviana Alvares Lozada", "e": "e.alvares@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Erika Antunez Garcia", "e": "e.antunez.garcia@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Fernando Alvarado Ramirez", "e": "f.alvarado.ramirez@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Flavio Cesar Garcia Martinez", "e": "f.garcia.martinez@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Gabriela Lopez Herrera", "e": "glopez@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Guadalupe Montserrat Cuellar Valerio", "e": "g.cuellar.valerio@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Guillermina Tecorral Martinez", "e": "gtecorral@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Gustavo Lopez Lopez", "e": "g.lopez@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Hector Quezada Corona", "e": "h.quezada.corona@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Ilce Del Carmen Avila Navarro", "e": "i.avilan@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Irais Sol Ayala Hernandez", "e": "i.ayala@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Irene Marlen Alcantara Hernandez", "e": "i.alcantara.hernandez@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Irving Ramirez Hernandez", "e": "i.ramirez.hernandez@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Isabel Guadalupe Ovando Delgado", "e": "i.ovando.delgado@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Israel Salas Quijada", "e": "i.salas.quijada@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Israel Sinhue Chavez Lopez", "e": "i.chavez.lopez@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Jaquelin Bermudez Islas", "e": "j.bermudez.islas@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Javier Andree Cedeño Martinez", "e": "j.cedeno.martinez@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Jenifer Yomira Montes De Oca Baron", "e": "j.montes.baron@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Jennifer Desiree Davila Pocoroba", "e": "j.davila@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Jessica Pilar Arias Cadena", "e": "j.arias.cadena@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Joaquin Castañeda Saldaña", "e": "j.castaneda.saldana@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Joasir Alberto Cruz Hernandez", "e": "j.cruz.hernandez@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Jose Francisco Miguel Hernandez", "e": "j.miguel@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Jose Juan Guerrero Paz", "e": "jjguerrero@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Jose Luis Gomez Vargas", "e": "j.gomez@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Jose Luis Sanchez Hernandez", "e": "j.sanchez.hernandez@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Josue Raul Rojas Valadez", "e": "j.rojas.valadez@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Juan Gustavo Cruz Fernandez", "e": "j.cruz.fernandez@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Julio Cesar Lozano Mayorga", "e": "j.lozano.mayorga@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Karla Yathed Oaxaca Melendez", "e": "k.oaxaca.melendez@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Leonardo Hernandez Peña", "e": "l.hernandez.pena@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Leslie Ortiz Mercado", "e": "l.ortiz@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Lidia Berenice Cruz Calzada", "e": "licruzc@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Liliana Marlen Sanchez Tapia", "e": "lsanchez@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Lider De Unidad De Negocio"}, {"n": "Lourdes Karina Contreras Garcia", "e": "lcontreras@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Luis Angel Ortiz Martinez", "e": "l.ortiz.martinez@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Luis Oscar Pelcastre Espejel", "e": "l.pelcastre.espejel@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Marco Antonio Cordova Alonso", "e": "cordova_alonso@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Maria Guadalupe Martinez Gonzalez", "e": "m.martinez.gonzalez@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Maria Isabel Miranda Bustamante", "e": "m.miranda.bustamante@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Mariel Guadalupe Guerra Gonzalez", "e": "m.guerra.gonzalez@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Marlene Barajas Escobar", "e": "m.barajas.escobar@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Martha Susana Talamantes Badillo", "e": "mstalamantesb@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Maximino Garcia Lopez", "e": "mgarcial@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Mayra Alejandra Hernandez Flores", "e": "m.hernandez.flores@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Mayra Jazmin Uribe Cortes", "e": "m.uribe.cortes@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Miguel Agustin Murguia Rodriguez", "e": "mmurguia@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Miguel Angel Gallegos Garcia", "e": "m.gallegos.garcia@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Myrna Galicia Martinez", "e": "mgaliciam@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Nadia Guadalupe Hernandez Rivera", "e": "n.hernandez.rivera@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Norma Araceli Mendoza Vazquez", "e": "namendozav@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Oscar Cortes Duran", "e": "o.cortes@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Oscar Ivan Morquecho Baltazar", "e": "o.morquecho@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Oscar Mejia Galicia", "e": "o.mejia.galicia@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Paola Berenice Guzman Mosqueda", "e": "p.guzman.mosqueda@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Ramon Perez Arana", "e": "rperez@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Gerente Regional Centro"}, {"n": "Rodolfo Antonio Cruz Pelcastre", "e": "r.cruz.pelcastre@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Rosa Maria Garnica Mendoza", "e": "r.garnica.mendoza@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Rosario Mena Zamora", "e": "r.menaza@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Salem Tenorio Martinez", "e": "s.tenorio.martinez@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Samuel Ricardo Vertiz Gavito", "e": "s.vertiz.gavito@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Sandra Patricia Rodriguez Rugerio", "e": "s.rodriguez.rugerio@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Sarai Duran Sanchez", "e": "sduran@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Teresa Cordova Cortez", "e": "t.cordova.cortez@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Thalia Serrano Guzman", "e": "tserrano@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Lider De Unidad De Negocio"}, {"n": "Vanessa Karla Urban Gutierrez", "e": "v.urban.gutierrez@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Vanessa Lizeth Garcia Escalante", "e": "v.garcia@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Veronica Magdalena Rojas Enriquez", "e": "vrojas@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Veronica Muñoz Tapia", "e": "vmunozt@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Victor Martin Rosales Bañuelos", "e": "vrosales@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Violeta Alejandra Romero Moctezuma", "e": "vromero@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Virginia Alanis Suarez", "e": "valanis@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Yadira Bautista Del Angel", "e": "yabautista@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Lider De Unidad De Negocio"}, {"n": "Yair Guillermo Tahuilan Arizmendi", "e": "y.tahuilan.arizmendi@hulifestyle.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Yedizadet Maqueda Tecorral", "e": "y.maqueda@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Yoav Manuel Gonzalez Gomez", "e": "y.gonzalez.gomez@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Yunuen Clarivel Garcia Castro", "e": "ygarciac@hogaresunion.mx", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Donovan Solano Andrade", "e": "dsolano@hogaresunion.mx", "r": "CENTRO", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Coordinador De Marketing Hidalgo"}, {"n": "Monserrath Laguna Rojas", "e": "mlaguna@hogaresunion.com", "r": "CENTRO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Becario"}, {"n": "Rodrigo Gonzalez Garcia", "e": "rogonzalez@hogaresunion.mx", "r": "CENTRO", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Coordinador De Marketing Centro"}, {"n": "Alma Yazmin Castelan Rosas", "e": "acastelan@hogaresunion.mx", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Coordinador De Servicios Financieros"}, {"n": "Armando Hernandez Robles", "e": "ahernandezr@gim.mx", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Especialista En Titulacion"}, {"n": "Brenda Villarruel Arana", "e": "bvillarruel@hogaresunion.mx", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Soluciones Financieras"}, {"n": "Deyssi Nalleli Cruz Manzo", "e": "dcruz@hogaresunion.mx", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Servicios Financieros"}, {"n": "Gabriela Torres Romero", "e": "gtorresr@hogaresunion.mx", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Titulacion"}, {"n": "Irma Isela Islas De La Rosa", "e": "iislas@hogaresunion.mx", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Coordinador De Titulacion"}, {"n": "Jaime Tovar Torres", "e": "jtovar@gim.mx", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Gerente De Soluciones Y Servicios Financieros"}, {"n": "Jorge Antonio Hernandez Hernandez", "e": "jahernandezh@hogaresunion.mx", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista De Soluciones Financieras"}, {"n": "Jorge Armando Velazquez Gonzalez", "e": "jvelazquez@gim.mx", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Coordinador De Titulacion"}, {"n": "Juan Carlos Rosas Velazquez", "e": "jrosasv@hogaresunion.mx", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista De Servicios Financieros"}, {"n": "Maria Jacqueline Rivera Osorio", "e": "marivera@hogaresunion.mx", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Servicios Financieros"}, {"n": "Mario Javier Cruz Aquino", "e": "macruz@hogaresunion.mx", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista De Titulacion"}, {"n": "Marlen Victoria Garcia Nava", "e": "mgarcian@hogaresunion.mx", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Coordinador De Soluciones Financieras"}, {"n": "Miriam Rojas Torres", "e": "mirojas@hogaresunion.mx", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Titulacion"}, {"n": "Nancy Guadalupe Navarrete Torres", "e": "ngnavarrete@hogaresunion.mx", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Soluciones Financieras"}, {"n": "Raul Lopez Becerril", "e": "ralopez@gim.mx", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Especialista En Titulacion"}, {"n": "Rosa Isela Sanchez Jimenez", "e": "rsanchez@hogaresunion.mx", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Soluciones Financieras"}, {"n": "Rosa Lizbeth Alvarez Hernandez", "e": "ralvarezh@hogaresunion.mx", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Coordinador Administrativo"}, {"n": "Claudia Izamar Santana Piña", "e": "csantana@hogaresunion.com", "r": "CENTRO", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Gloria Fernanda Lagunas Castillo", "e": "gflaguna@hogaresunion.com", "r": "CENTRO", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Laura Vega Jimenez", "e": "lvega@hogaresunion.com", "r": "CENTRO", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Susana Benhumea Rivera", "e": "sbenhumea@hogaresunion.com", "r": "CENTRO", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Wendy Haro Tapia", "e": "wharo@hogaresunion.com", "r": "CENTRO", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Ximena Hernandez Gonzalez", "e": "xhernandezg@hogaresunion.com", "r": "CENTRO", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Alma Rosario Aldama Valdez", "e": "araldama@hogaresunion.mx", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Mujer", "p": "Community Manager"}, {"n": "Angel Emilio Hernandez Gonzalez", "e": "aehernandez@hogaresunion.com", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Hombre", "p": "Auxiliar De Reclutamiento Comercial"}, {"n": "Angelica Yuridia Plata Ochoa", "e": "aplata@hogaresunion.com", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Mujer", "p": "Analista De Reclutamiento Comercial"}, {"n": "Axl Eduardo Cruz Mejia", "e": "aecruz@hogaresunion.mx", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Hombre", "p": "Auxiliar De Reclutamiento Comercial"}, {"n": "Claudia Elena Velazquez Esquivel", "e": "cvelazquez@hogaresunion.mx", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Mujer", "p": "Especialista En Entrenamiento De Creditos"}, {"n": "Daniela Jimena Ramirez Diaz", "e": "djramirez@hogaresunion.mx", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Mujer", "p": "Diseñador De Materiales"}, {"n": "Diana Parra Garcia", "e": "dparra@hogaresunion.mx", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Mujer", "p": "Gerente Corporativo De Centro De Entrenamiento Comercial"}, {"n": "Diego Fernando Nieto Alvarez", "e": "dfnieto@hogaresunion.mx", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Hombre", "p": "Disenador Grafico"}, {"n": "Edgardo Sebastian Mojica Yañez", "e": "emojica@hogaresunion.com", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Hombre", "p": "Analista De Reclutamiento Comercial"}, {"n": "Gisela Farias Olguin", "e": "gfarias@hogaresunion.mx", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Mujer", "p": "Coordinador De Reclutamiento Comercial"}, {"n": "Hugo Hernandez Ramirez", "e": "hhernandezr@hogaresunion.mx", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Hombre", "p": "Especialista En Producto"}, {"n": "Jesus Octavio Soto Jordan", "e": "jsoto@hogaresunion.mx", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Hombre", "p": "Especialista En Entrenamiento De Herramientas Y Sistemas De Trabajo"}, {"n": "Johana Tamara Vazquez Contreras", "e": "jvazquez@hogaresunion.mx", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Mujer", "p": "Auxiliar Administrativo"}, {"n": "Josias Armando Creus Ojeda", "e": "jacreus@hogaresunion.mx", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Hombre", "p": "Analista De Lms"}, {"n": "Karla Denisse Lopez Campos", "e": "kdlopez@hogaresunion.mx", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Mujer", "p": "Auxiliar De Reclutamiento Comercial"}, {"n": "Luis Angel Cruz Mejia", "e": "lcruz@hogaresunion.mx", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Hombre", "p": "Especialista En Entrenamiento Digital"}, {"n": "Magali Nova Ortiz", "e": "mnova@hogaresunion.mx", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Mujer", "p": "Especialista En Capacitacion Y Cultura Organizacional"}, {"n": "Mario Chavez Trejo", "e": "mchavezt@hogaresunion.mx", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Hombre", "p": "Analista De Reclutamiento Comercial"}, {"n": "Martha De Martini Cortes", "e": "mdmartini@hogaresunion.mx", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Mujer", "p": "Auxiliar De Reclutamiento Comercial"}, {"n": "Tonatiuh Garza Martinez", "e": "tgarza@hogaresunion.mx", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Hombre", "p": "Especialista En Reclutamiento Comercial"}, {"n": "Hector Fernando Pacheco Perez", "e": "hpacheco@hogaresunion.mx", "r": "CORPORATIVO", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Alejandro Revuelta Lopez", "e": "arevuelta@gim.com.mx", "r": "CORPORATIVO", "a": "COMERCIALIZACION", "s": "Hombre", "p": "Director Corporativo De Comercializacion"}, {"n": "Andrea Abigail Mendez Carrillo", "e": "aamendez@hogaresunion.mx", "r": "CORPORATIVO", "a": "COMERCIALIZACION", "s": "Mujer", "p": "Analista De Presupuestos"}, {"n": "Jose Alberto Camacho Guadarrama", "e": "jcamachog@hogaresunion.mx", "r": "CORPORATIVO", "a": "COMERCIALIZACION", "s": "Hombre", "p": "Gerente Corporativo De Administracion Comercial"}, {"n": "Alma Rocio Ortega Gonzalez", "e": "arortega@hogaresunion.com", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Host Telefonico"}, {"n": "Andrea Cecilia Galvan Sanchez", "e": "acgalvan@hogaresunion.com", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Host Telefonico"}, {"n": "Andrea Rivera Cruz", "e": "arivera@hogaresunion.com", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Host Telefonico"}, {"n": "Carlos Jaziel Alcantara Gonzalez", "e": "calcantara@hogaresunion.com", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Hombre", "p": "Host Compra Facil"}, {"n": "Cesar Alonso Garcia Morales", "e": "cagarcia@hogaresunion.com", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Hombre", "p": "Host Telefonico"}, {"n": "Cynthia Nidia Alejandre Garcia", "e": "nalejandre@hogaresunion.com", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Host Telefonico"}, {"n": "Diego Enrique Lozada Bejero", "e": "dlozada@hogaresunion.com", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Hombre", "p": "Host Telefonico"}, {"n": "Edgar Uriel Rosales Cortez", "e": "erosalesc@hogaresunion.com", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Hombre", "p": "Host Telefonico"}, {"n": "Elohim Martinez Garcia", "e": "egmartinez@hogaresunion.com", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Hombre", "p": "Host Telefonico"}, {"n": "Fernando Michell Martinez Cardona", "e": "fmmartinez@hogaresunion.com", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Hombre", "p": "Host Telefonico"}, {"n": "Francisco Javier Ordaz De Jesus", "e": "fordaz@hogaresunion.com", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Hombre", "p": "Wfm"}, {"n": "Galilea Yadira Jimenez Lopez", "e": "gyjimenez@hogaresunion.com", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Host Telefonico"}, {"n": "Jorge Arturo Lopez Gonzalez", "e": "jalopezg@hogaresunion.com", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Hombre", "p": "Host Compra Facil"}, {"n": "Jose Alonso Carmona Sanchez", "e": "jacarmona@hogaresunion.com", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Hombre", "p": "Host Compra Facil"}, {"n": "Juan Carlos Quiroz Ceron", "e": "jcquiroz@hogaresunion.com", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Hombre", "p": "Host Telefonico"}, {"n": "Laurent Nazareth Rosas Resendiz", "e": "lnrosas@hogaresunion.com", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Host Telefonico"}, {"n": "Luis Angel Caballero Perez", "e": "lcaballero@hogaresunion.com", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Hombre", "p": "Host Telefonico"}, {"n": "Luis Arturo Sanchez Mejia", "e": "lasanchezm@hogaresunion.com", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Hombre", "p": "Host Telefonico"}, {"n": "Magaly Edith Zaragoza Calderon", "e": "mezaragoza@hogaresunion.com", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Host Customer Engagement Center"}, {"n": "Maria Fernanda Baez Cortes", "e": "mfbaez@hogaresunion.com", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Host Telefonico"}, {"n": "Maria Fernanda Torres Lopez", "e": "mftorres@hogaresunion.com", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Host Compra Facil"}, {"n": "Maria Isabel Maldonado Lopez", "e": "mimaldonado@hogaresunion.com", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Host Compra Facil"}, {"n": "Maribel Garcia Muñiz", "e": "mgarciamu@hogaresunion.com", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Host Telefonico"}, {"n": "Narayana Navarrete Ramirez", "e": "nnavarrete@hogaresunion.com", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Host Telefonico"}, {"n": "Nelly Arisbel Puebla Martinez", "e": "napuebla@hogaresunion.com", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Host Telefonico"}, {"n": "Pablo Romero Reza", "e": "promero@hogaresunion.com", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Hombre", "p": "Host Compra Facil"}, {"n": "Ricardo Hernandez Martinez", "e": "rimartinez@hogaresunion.mx", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Hombre", "p": "Gerente Corporativo De Engagement Center"}, {"n": "Rodrigo Fabian Maya", "e": "rfabian@hogaresunion.com", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Hombre", "p": "Host Telefonico"}, {"n": "Ruth Esther Martinez Martinez", "e": "remartinez@hogaresunion.com", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Host Telefonico"}, {"n": "Susana Vazquez Ortega", "e": "svazquezo@hogaresunion.mx", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Supervisor De Engagement Center"}, {"n": "Veronica Morales Bautista", "e": "vmoralesb@hogaresunion.com", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Host Compra Facil"}, {"n": "Abraham Mercado Urow", "e": "amercado@hogaresunion.mx", "r": "CORPORATIVO", "a": "INNOVACION Y MEJORA CONTINUA", "s": "Hombre", "p": "Product Owner"}, {"n": "Alejandro Armando Espinosa Ponce", "e": "aespinosap@hogaresunion.mx", "r": "CORPORATIVO", "a": "INNOVACION Y MEJORA CONTINUA", "s": "Hombre", "p": "Process Owner"}, {"n": "Eduardo Sanchez Lopez", "e": "esanchezlo@dap.com.mx", "r": "CORPORATIVO", "a": "INNOVACION Y MEJORA CONTINUA", "s": "Hombre", "p": "Gerente Corporativo Pmo"}, {"n": "Jaime Grezemkovsky Zilber", "e": "jgrez@gim.com.mx", "r": "CORPORATIVO", "a": "INNOVACION Y MEJORA CONTINUA", "s": "Hombre", "p": "Director Corporativo De Innovacion Y Mejora Continua"}, {"n": "Jorge Prieto Rayas", "e": "jprietor@hogaresunion.mx", "r": "CORPORATIVO", "a": "INNOVACION Y MEJORA CONTINUA", "s": "Hombre", "p": "Product Owner"}, {"n": "Leydi Diana Granados Sanchez", "e": "lgranados@hogaresunion.mx", "r": "CORPORATIVO", "a": "INNOVACION Y MEJORA CONTINUA", "s": "Mujer", "p": "Coordinador De Innovacion Y Proyectos Comerciales"}, {"n": "Marco Antonio Jimenez Cervantes", "e": "majimenezc@hogaresunion.mx", "r": "CORPORATIVO", "a": "INNOVACION Y MEJORA CONTINUA", "s": "Hombre", "p": "Gerente Corporativo Pmo"}, {"n": "Miriam Berenice Diaz Urquidi", "e": "mbdiaz@hogaresunion.mx", "r": "CORPORATIVO", "a": "INNOVACION Y MEJORA CONTINUA", "s": "Mujer", "p": "Scrum Master"}, {"n": "Richard Vargas Nengua", "e": "rvargas@dap.com.mx", "r": "CORPORATIVO", "a": "INNOVACION Y MEJORA CONTINUA", "s": "Hombre", "p": "Hubspot Manager"}, {"n": "Sonia Mervi Maletz Ramirez", "e": "smaletz@hogaresunion.mx", "r": "CORPORATIVO", "a": "INNOVACION Y MEJORA CONTINUA", "s": "Mujer", "p": "Product Owner"}, {"n": "Tania Moiño De Leon", "e": "tmoino@hogaresunion.mx", "r": "CORPORATIVO", "a": "INNOVACION Y MEJORA CONTINUA", "s": "Mujer", "p": "Product Owner"}, {"n": "Ariel Plasencia Diaz", "e": "aplasencia@hogaresunion.mx", "r": "CORPORATIVO", "a": "INTELIGENCIA COMERCIAL", "s": "Hombre", "p": "Analista Power Bi"}, {"n": "Cristopher Eduardo Villegas Govantes", "e": "cvillegas@hogaresunion.mx", "r": "CORPORATIVO", "a": "INTELIGENCIA COMERCIAL", "s": "Hombre", "p": "Data Analyst"}, {"n": "Ivan Giovanni Valdespin Garcia", "e": "ivaldespin@hogaresunion.mx", "r": "CORPORATIVO", "a": "INTELIGENCIA COMERCIAL", "s": "Hombre", "p": "Data Researcher"}, {"n": "Jonathan Lozano Villanueva", "e": "jolozano@hogaresunion.mx", "r": "CORPORATIVO", "a": "INTELIGENCIA COMERCIAL", "s": "Hombre", "p": "Gerente Corporativo De Innovacion E Inteligencia Comercial"}, {"n": "Oscar Lopez Perea", "e": "olopez@hogaresunion.mx", "r": "CORPORATIVO", "a": "INTELIGENCIA COMERCIAL", "s": "Hombre", "p": "Product Owner Innovacion Comercial"}, {"n": "Raimer Salas Gonzalez", "e": "rsalas@hogaresunion.mx", "r": "CORPORATIVO", "a": "INTELIGENCIA COMERCIAL", "s": "Hombre", "p": "Data Scientist"}, {"n": "Victor Manuel Lopez Rangel", "e": "vlopezr@hogaresunion.mx", "r": "CORPORATIVO", "a": "INTELIGENCIA COMERCIAL", "s": "Hombre", "p": "Data Analyst"}, {"n": "Alan Enrique Estrada Reyes", "e": "aestrada@hogaresunion.mx", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Community Manager Hul"}, {"n": "Alejandra Maria Belmont Alvarez", "e": "abelmont@hogaresunion.mx", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Coordinador Creativo"}, {"n": "Alejandro Yasir Espejel Carmona", "e": "yespejel@hogaresunion.mx", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Coordinador Social Media"}, {"n": "Alondra Mayorga Ramirez", "e": "amayorga@hogaresunion.mx", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Community Manager Hu"}, {"n": "Andres Moreno Sanchez", "e": "amoreno@hogaresunion.mx", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Especialista Bots & Automation"}, {"n": "Barbara Juliana Cunha", "e": "bjuliana@hogaresunion.mx", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Especialista De Contenidos Compra Facil"}, {"n": "Diana Esther Cruz Ramirez", "e": "dcruzr@hogaresunion.mx", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Lead Conversion"}, {"n": "Diana Gabriela Serrano Lira", "e": "dserrano@hogaresunion.mx", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Auxiliar Administrativo"}, {"n": "Erika Alejandra Sanchez Atenco", "e": "esanchez@hogaresunion.mx", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Especialista De Contenidos"}, {"n": "Ernesto Acosta Zamora", "e": "eracosta@hogaresunion.com", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Coordinador De Contenidos"}, {"n": "Ezra Almanza Ramirez", "e": "ealmanza@hogaresunion.mx", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Coordinador De Diseno Grafico"}, {"n": "Fabiola Beltran Lemus", "e": "fbentran@hogaresunion.mx", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Coordinador De Marketing Meriden"}, {"n": "Fernando Nahum Sanchez Reyes", "e": "fsanchezr@hogaresunion.mx", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Diseñador Multimedia"}, {"n": "Ik Sebastian Gomez Ruiz", "e": "isgomez@hogaresunion.mx", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Editor De Video"}, {"n": "Juan Pablo Buffa", "e": "jbuffa@gim.mx", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Gerente Corporativo De Mercadotecnia Y Publicidad"}, {"n": "Karen Aidee Pineda Piña", "e": "kpineda@hogaresunion.mx", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Diseñador Multimedia"}, {"n": "Nayelly Rebollar Carbajal", "e": "nrebollar@hogaresunion.com", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Digital Planner Squad Digital"}, {"n": "Rene Alejandro Martinez Mandujano", "e": "ramartinez@hogaresunion.mx", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Coordinador Paid Media"}, {"n": "Sharon Romero Zisman", "e": "szisman@hogaresunion.mx", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Coordinador De Marketing Central Park"}, {"n": "Silvana Ramirez Romero", "e": "rromeros@hogaresunion.mx", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Marketing Operations Associate"}, {"n": "Tania Evia Meneses", "e": "tevia@hogaresunion.mx", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Especialista De Contenidos"}, {"n": "Valeria Montserrat Garcia Hernandez", "e": "vmgarcia@hogaresunion.mx", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Trafficker Jr"}, {"n": "Victor Arturo Tapia Mondragon", "e": "atapia@dap.com.mx", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Editor De Video"}, {"n": "Alexis Javier Alvarado Almaguer", "e": "aalvarado@hogaresunion.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Supervisor De Bop"}, {"n": "Andres Figueroa Hernandez", "e": "afigueroa@hogaresunion.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista De Servicios Financieros"}, {"n": "Brenda Lizbeth De Aquino Plata", "e": "bldaquino@hogaresunion.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista Compra Facil"}, {"n": "Christopher Lozada Martinez", "e": "clozada@hogaresunion.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista Compra Facil"}, {"n": "Dante Ivan Lopez Cariño", "e": "dlopezc@hulifestyle.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista Compra Facil"}, {"n": "David Perez Martinez", "e": "daperez@hulifestyle.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista De Servicios Financieros"}, {"n": "Eleazar Arturo Mendez Mancera", "e": "emendez@hulifestyle.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista De Servicios Financieros"}, {"n": "Eliud Andrade Dominguez", "e": "eandrade@hogaresunion.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista Compra Facil"}, {"n": "Gabriela Sifuentes Gonzalez", "e": "gsifuentes@hogaresunion.com", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Servicios Financieros"}, {"n": "Jeny Jazaret Jaimes Cuenca", "e": "jjaimes@hogaresunion.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista De Servicios Financieros"}, {"n": "Jorge Carlos Tellez Garcia", "e": "jtellez@hulifestyle.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Especialista Compra Facil"}, {"n": "Jorge Jair Rosas Belman", "e": "jrosas@hogaresunion.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista Compra Facil"}, {"n": "Jorge Luis Mejia Garcia", "e": "jomejia@gim.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Coordinador De Titulacion"}, {"n": "Josahandi Abigail Palacios Martinez", "e": "japalacios@hogaresunion.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Especialista En Administracion De Ventas"}, {"n": "Joselin Paola Walles Sotelo", "e": "jowalles@hulifestyle.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Especialista Compra Facil"}, {"n": "Josue David Nuñez Sanchez", "e": "jdnunez@hogaresunion.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista De Servicios Financieros"}, {"n": "Juan Carlos Rodriguez Lomeli", "e": "jcrodriguezl@hogaresunion.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista Compra Facil"}, {"n": "Luis Alejandro Bastida Rodriguez", "e": "lubastidar@hulifestyle.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista De Servicios Financieros"}, {"n": "Manuel Agustin Pallares Saldaña", "e": "mpallares@hogaresunion.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista Compra Facil"}, {"n": "Marco Antonio Valenzuela Luviano", "e": "mvalenzuela@hogaresunion.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Coordinador De Bom"}, {"n": "Maria Antonieta Diez Fierro", "e": "mdiez@hogaresunion.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Subgerente De Bop"}, {"n": "Maria Elizabeth Vergara Moisen", "e": "mvergara@hulifestyle.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Servicios Financieros"}, {"n": "Marian Lizbeth Espejo Huerta", "e": "mespejo@hogaresunion.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Especialista Compra Facil"}, {"n": "Maricela Vargas Solano", "e": "mvargas@hogaresunion.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Servicios Financieros"}, {"n": "Mayra Macazaga Cabello", "e": "mmacazaga@hogaresunion.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Coordinador De Administracion De Ventas"}, {"n": "Miguel Alejandro Mendoza Servin", "e": "mimendozas@hogaresunion.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista Compra Facil"}, {"n": "Nayeli Ramirez Manzo", "e": "nramirez@hogaresunion.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Especialista En Administracion De Ventas"}, {"n": "Olga Angelina Ruiz Lopez", "e": "oruiz@hogaresunion.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Especialista En Administracion De Ventas"}, {"n": "Omar Gomez Andrade", "e": "ogomez@hulifestyle.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Coordinador De Soluciones Financieras Y Titulacion"}, {"n": "Prisma Lucinda Ramos Suarez", "e": "plramos@hulifestyle.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Especialista Compra Facil"}, {"n": "Ricardo Anguiano Miranda", "e": "ranguiano@hogaresunion.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Especialista Compra Facil"}, {"n": "Ricardo Diaz Cedillo", "e": "rdiaz@hulifestyle.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Especialista Compra Facil"}, {"n": "Roberto Carlos Orizaba Camacho", "e": "rorizaba@hogaresunion.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista Compra Facil"}, {"n": "Ruben Enrique Enriquez Pavia", "e": "renriquez@gim.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Gerente Corporativo De Operaciones Y Servicios De Titulacion"}, {"n": "Samuel Eduardo Mejia Gonzalez", "e": "smejia@hogaresunion.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Especialista Compra Facil"}, {"n": "Susana Gonzalez Reyes", "e": "sgonzalezr@hogaresunion.mx", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Servicios Financieros"}, {"n": "Alberto Braulio Vite", "e": "a.braulio.vite@hogaresunion.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Product Genius"}, {"n": "Alejandra Torres Hernandez", "e": "a.torres.hernandez@hogaresunion.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Amada Jasmin Garcia Armijos", "e": "a.garcia.armijos@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Ana Luisa Chacon De La Colina", "e": "a.chacon.de.la.colina@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Product Genius"}, {"n": "Andrea Rivera Gomez", "e": "a.rivera.gomez@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Product Genius"}, {"n": "Anell Medrano Garcia", "e": "a.medrano@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Anilu Alejos Hernandez", "e": "a.alejosh@hogaresunion.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Ariana Martinez Marquez", "e": "a.martinez.marquez@hogaresunion.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Beatriz Adriana Piedras Vazquez", "e": "b.piedras.vazquez@hogaresunion.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Berenice Yasmin Roa Lopez", "e": "b.roa.lopez@hogaresunion.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Caeli Rubi Acuña Mejia", "e": "c.acunam@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Claudia Jacqueline Fernandez Arroyo", "e": "c.fernandez@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Claudia Margarita Guzman Hernandez", "e": "c.guzman@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Cristian Ricardo Hernandez Aguilera", "e": "crhernandez@hogaresunion.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Gerente Regional Cosmopol"}, {"n": "Daniela Lilian Gutierrez Cervantes", "e": "d.gutierrez@hogaresunion.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "David Vela Ramirez", "e": "dvela@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Diana Judith Munguia Alvarez", "e": "d.munguia.alvarez@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Diana Laura Ortiz Mendiola", "e": "d.ortiz.mediola@hogaresunion.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Eduardo Rojas Reyes", "e": "e.rojas@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Elizabeth Castro Ramos", "e": "ecastro@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Erandeni Naxeli Rojas Juarez", "e": "e.rojas.juarez@hogaresunion.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Erik Arredondo Olivares", "e": "earredondo@hogaresunion.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Erika Guadarrama Ramirez", "e": "e.guadarrama.ramirez@hogaresunion.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Fernanda Ixchel Villa Lemus", "e": "f.villa@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Fernando Maldonado Ayala", "e": "fmaldonadoa@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Fernando Meza Tapia", "e": "fmezat@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Francisco Abraham Santiago Estrada", "e": "f.santiago@hogaresunion.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Gabriela Esperanza Lopez Salazar", "e": "g.lopez.salazar@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Gerardo Adrian Espinosa Villanueva", "e": "geespinoza@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Grisel Montserrat Muñiz Torres", "e": "g.muniz.torres@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Huberto Anastacio Fuentes Quiroz", "e": "h.fuentes@hogaresunion.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Isaac Cohen Saadia", "e": "icohen@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Ivan Eduardo Diaz Escobar", "e": "idiaz@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Ivonne Alejandra Mejia Torres", "e": "i.mejia.torres@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Janett Rosario Cortes Gonzalez", "e": "j.cortes@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Jorge Josedec Romero Guillen", "e": "j.romero.guillen@hogaresunion.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Jose Eduardo Castillo Davila", "e": "j.castillo.davila@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Product Genius"}, {"n": "Jose Rodriguez Gregorio", "e": "j.rodriguezg@hogaresunion.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Juan Bernardo Garcia Salazar", "e": "j.garcias@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Juan Manuel Valadez Santillan", "e": "jmvaladezs@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Karen Maricruz Peralta Mendoza", "e": "kaperalta@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Leonardo Argumosa Reza", "e": "l.argumosa.reza@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Leonardo Perez Colin", "e": "l.perezc@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Product Genius"}, {"n": "Lizbeth Gallardo Santana", "e": "ligallardos@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Lizeth Aranza Lopez Mendoza", "e": "llopezm@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Lider De Unidad De Negocio"}, {"n": "Luz Mariana De Los Reyes Millan Villegas", "e": "l.millan.villegas@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Product Genius"}, {"n": "Maria De Los Angeles Gutierrez Soto", "e": "mgutierrezs@hogaresunion.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Lider De Unidad De Negocio"}, {"n": "Marianela Valdez Marquez", "e": "mvaldezm@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Maribel Lopez Caballero", "e": "m.lopez@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Marilu Jimenez Hernandez", "e": "m.jimenez@hogaresunion.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Marisol Rocha Flores", "e": "m.rocha.flores@hogaresunion.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Melina Alicia Alfaro Gress", "e": "m.alfaro.gress@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Miguel Angel Caso Luengo Baeza", "e": "m.caso@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Miguel Angel Martinez Bautista", "e": "m.martinez@hogaresunion.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Monica Isabel Martinez Torres", "e": "m.martinezt@hogaresunion.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Nancy Fabiola Ramirez Hernandez", "e": "n.ramirez.hernandez@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Olga Patricia Tiburcio Reyes", "e": "o.tiburcio.reyes@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Olivia Castro Lucena", "e": "o.castro@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Oscar Alvaro Escobar Martinez", "e": "oescobarm@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Oscar Daniel Hernandez Tapia", "e": "o.hernandez.tapia@hogaresunion.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Paola Ochoa Vallejo", "e": "pochoav@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Lider De Unidad De Negocio"}, {"n": "Ricardo Laguna Loperena", "e": "r.laguna@hogaresunion.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Rocio Marleth Garcia Rodriguez", "e": "r.garciar@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Rodrigo Cruz Cruz", "e": "rcruzcr@hogaresunion.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Lider De Unidad De Negocio"}, {"n": "Roma Elizabeth Salinas Olvera", "e": "r.salinas@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Rosa Isela Rosales Herrera", "e": "r.rosales.herrera@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Saamantha Berenice Mejia Cervantes", "e": "s.mejia@hogaresunion.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Stephany Gamez Castro", "e": "s.gamez.castro@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Valeria Flores Zarate", "e": "v.flores.zarate@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Vianey Lopez Lopez", "e": "v.lopez.lopez@hogaresunion.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Victor Manuel Garcia Cruz", "e": "vmgarcia@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Xavier Eduardo Vega Covarrubias", "e": "x.vega.covarrubias@hulifestyle.mx", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Diana Berenisse Aceves Aguilar", "e": "daceves@hogaresunion.mx", "r": "LIFESTYLE", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Diseñador Multimedia"}, {"n": "Victor Erick Goytia Licona", "e": "vigoytial@hogaresunion.mx", "r": "LIFESTYLE", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Disenador Grafico Jr"}, {"n": "Victor Manuel Gonzalez Cano", "e": "vgonzalez@hogaresunion.mx", "r": "LIFESTYLE", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Coordinador De Marketing Calimaya"}, {"n": "Abel Rios Chapital", "e": "arios@hogaresunion.mx", "r": "LIFESTYLE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista De Titulacion"}, {"n": "Alfonso Michel Tellez Solares", "e": "altellez@hulifestyle.mx", "r": "LIFESTYLE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista De Soluciones Financieras"}, {"n": "Brenda Lizeth Gomez Tarango", "e": "bgomez@hogaresunion.com", "r": "LIFESTYLE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Titulacion"}, {"n": "Daniel Rangel Garduño", "e": "drangel@hulifestyle.mx", "r": "LIFESTYLE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Coordinador De Servicios Financieros"}, {"n": "Hector Manuel Buenaventura Ramirez", "e": "hmbuenaventura@hogaresunion.mx", "r": "LIFESTYLE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Coordinador De Soluciones Financieras"}, {"n": "Hugo Enrique Garcia Vazquez", "e": "hugarcia@hulifestyle.mx", "r": "LIFESTYLE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Coordinador De Soluciones Financieras"}, {"n": "Irma Cristina Guadalupe Martin Del Campo Paz", "e": "imartin@hulifestyle.mx", "r": "LIFESTYLE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Servicios Financieros"}, {"n": "Jessica Linette Gomez Ortiz", "e": "jgomezo@hogaresunion.mx", "r": "LIFESTYLE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Soluciones Financieras"}, {"n": "Leobardo Armando Mendoza Lopez", "e": "lmendoza@hogaresunion.mx", "r": "LIFESTYLE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista De Soluciones Financieras"}, {"n": "Maribel Vargas Ramirez", "e": "mvr@gim.mx", "r": "LIFESTYLE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Gerente De Soluciones Y Servicios Financieros"}, {"n": "Mario Rafael Anzaldo Vargas", "e": "manzaldo@hulifestyle.mx", "r": "LIFESTYLE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista De Titulacion"}, {"n": "Nohemi Montserrat Soto Elizondo", "e": "nsoto@hogaresunion.mx", "r": "LIFESTYLE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Titulacion"}, {"n": "Paola Laguna Ulloa", "e": "plaguna@hogaresunion.mx", "r": "LIFESTYLE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Auxiliar Administrativo"}, {"n": "Viridiana Belen Granados Lopez", "e": "vgranados@hulifestyle.mx", "r": "LIFESTYLE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Coordinador De Titulacion"}, {"n": "Ximena Aguilar Garcia", "e": "xiaguilar@hogaresunion.com", "r": "LIFESTYLE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Titulacion"}, {"n": "Jose Metta Zaga", "e": "jmz@gim.mx", "r": "LIFESTYLE", "a": "VENTAS", "s": "Hombre", "p": "Director Regional Cosmopol"}, {"n": "Mayra Graciela Romero Parra", "e": "mromero@hogaresunion.com", "r": "LIFESTYLE", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Paulina Lopez Gonzalez", "e": "plopez@hogaresunion.mx", "r": "LIFESTYLE", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Tania Lizbeth Garcia Vergara", "e": "tgarcia@hogaresunion.com", "r": "LIFESTYLE", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Arantza Jaqueline Hernandez Molina", "e": "ahernandezm@hogaresunion.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Arlette Karina Medina De La Riva", "e": "amedina@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Brandon Figueroa Nava", "e": "b.figueroa.nava@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Bryan Ortiz Pedroza", "e": "b.ortiz.pedroza@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Carla Patricia Escayola Cornelio", "e": "cpescayola@hogaresunion.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Lider De Unidad De Negocio"}, {"n": "Cynthia Arteaga Rodriguez", "e": "c.arteaga@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "David Xala Baez", "e": "d.xala@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Diego Alejandro Martinez Vazquez", "e": "dmartinez@hogaresunion.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Donaji Camargo Peña", "e": "dcamargop@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Efren Tadeo Flores Diaz", "e": "e.flores.diaz@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Emilio Ramirez Serrano Torres", "e": "eramirez@hogaresunion.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Erika Mayola Romero Alpizar", "e": "aromeroa@hogaresunion.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Gabriela Caballero Garcia", "e": "gcaballerog@hogaresunion.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Gerardo Moyado Ortega", "e": "g.moyado@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Ilse Gonzalez Ortiz", "e": "i.gonzalez@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Irving Uriel Urrutia Anzures", "e": "i.urrutia@hogaresunion.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Itzel Abigail Ibarra Castillo", "e": "i.ibarra.castillo@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Product Genius"}, {"n": "Itzel Leon Lopez", "e": "i.leon.lopez@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Iveth Villalobos Brito", "e": "ivillalobos@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Ivonne De Martino Leal", "e": "idemartino@hogaresunion.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Jarel Salazar Barrera", "e": "jsalazar@hogaresunion.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Javier Arroyo Vargas", "e": "jarroyo@gim.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Gerente Regional Morelos"}, {"n": "Javier Teodoro Reza Rodriguez", "e": "j.reza@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Jazmin Tellez Farina", "e": "jtellez@hogaresunion.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Jessica Yovana Zarza Saucedo", "e": "jzarza@hogaresunion.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Jhoana Jahmai Lopez Saldaña", "e": "j.lopez@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Jonathan Israel Tejeda Delgado", "e": "j.tejeda.delgado@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Jose Antonio Velazquez Guzman", "e": "jvelazquezg@hogaresunion.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Karieth Vilchis Gonzalez", "e": "kvilchis@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Karina Anabel Valdez Ortiz", "e": "kvaldezo@hogaresunion.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Luis Flores Lopez", "e": "lfloresl@hogaresunion.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Margarita Manjarrez Durand", "e": "m.manjarrez@hogaresunion.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Maria Del Pilar Gomez Romo", "e": "m.gomez@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Maria Fernanda Negrete Retiguin", "e": "m.negrete.retiguin@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Marlon Anibal Vergara Jimenez", "e": "m.vergara.jimenez@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Miriam Lizette Contreras Torres", "e": "m.contreras@hogaresunion.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Nayeli Selene Garcia Corral", "e": "n.garcia.corral@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Paola Samaniego Dominguez", "e": "psamaniegod@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Product Genius"}, {"n": "Roman Jimenez Dominguez", "e": "r.jimenezd@hogaresunion.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Rosa Maria De Jesus Mauricio", "e": "r.djesus.mauricio@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Sergio Azghar Peña Accem", "e": "saccem@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Silvia Fernandez Peralta", "e": "sfernandez@hogaresunion.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Timoteo Gonzalez Nava", "e": "t.gonzalez.nava@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Veronica Porras Bonilla", "e": "v.porras@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Victor Alejandro Herrera De La Torre", "e": "v.herrera.de.la.torre@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Virginia Mazon Ramirez", "e": "v.mazon@hogaresunion.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Yulideth Hernandez Castillo", "e": "y.hernandez.castillo@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Zenyazeth Ivonne Martinez Ruiz", "e": "zimartinezr@hogaresunion.mx", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Anali Esquivel Hernandez", "e": "aesquivel@hogaresunion.mx", "r": "MORELOS-PUEBLA", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Coordinador De Marketing Morelos-puebla"}, {"n": "Blanca Virginia Briones Calderon", "e": "bvbriones@hogaresunion.mx", "r": "MORELOS-PUEBLA", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Titulacion"}, {"n": "Brenda Rios Arguelles", "e": "briosa@hogaresunion.mx", "r": "MORELOS-PUEBLA", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Soluciones Financieras"}, {"n": "Elaine Martinez Gomez", "e": "emartinezg@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Titulacion"}, {"n": "Gabriela Coronado Arroyo", "e": "gcoronado@hogaresunion.mx", "r": "MORELOS-PUEBLA", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Titulacion"}, {"n": "Jhovana Yulissa Riquelme Sandoval", "e": "jriquelme@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Coordinador De Soluciones Financieras"}, {"n": "Luz Elena Marisol Bartolo Juarez", "e": "lembartolo@hogaresunion.mx", "r": "MORELOS-PUEBLA", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Servicios Financieros"}, {"n": "Mariana Hernandez Chalte", "e": "mahernandez@hogaresunion.mx", "r": "MORELOS-PUEBLA", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Coordinador De Titulacion"}, {"n": "Norma Lagunas Alarcon", "e": "nlaguna@hogaresunion.mx", "r": "MORELOS-PUEBLA", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Servicios Financieros"}, {"n": "Rosa Guadalupe Guillen Bernal", "e": "rgguillen@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Coordinador De Soluciones Financieras"}, {"n": "Rosa Isela Barrera Maldonado", "e": "rmaldonado@hogaresunion.mx", "r": "MORELOS-PUEBLA", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Servicios Financieros"}, {"n": "Ruben Yair Nuñez Garcia", "e": "rynunez@hulifestyle.mx", "r": "MORELOS-PUEBLA", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista De Soluciones Financieras"}, {"n": "Silvia Gabriela Reyes Hernandez", "e": "sreyes@hogaresunion.mx", "r": "MORELOS-PUEBLA", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Soluciones Financieras"}, {"n": "Dafne Itzel Vega Ponce", "e": "dvega@hogaresunion.com", "r": "MORELOS-PUEBLA", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Linda Leysi Alonso Garcia", "e": "lalonso@hogaresunion.com", "r": "MORELOS-PUEBLA", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Monica Ordoñez Leon", "e": "mordonez@hogaresunion.com", "r": "MORELOS-PUEBLA", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Silvana Carlota Hernandez Tolentino", "e": "schernandez@hogaresunion.mx", "r": "MORELOS-PUEBLA", "a": "VENTAS", "s": "Mujer", "p": "Auxiliar De Mercadotecnia"}, {"n": "Adrian Ponce Moreno", "e": "aponce@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Aldo Andreus Heredia Babb", "e": "a.heredia.babb@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Hombre", "p": "Product Genius"}, {"n": "Alejandro Cancino Herrera", "e": "a.cancino.herrera@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Areli Arteaga Hernandez", "e": "a.arteaga.hernandez@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Dafne Ivana Luna Lopez", "e": "d.luna.lopez@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Diego Morales Sanchez", "e": "d.morales@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Estela Ramos Monter", "e": "eramosm@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Product Genius"}, {"n": "Evelyn De Santiago Morales", "e": "e.de.santiago.morales@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Francisco Ivan Salinas Perez", "e": "f.salinas.perez@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Gabriela Rossano Sanchez", "e": "g.rossano.sanchez@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Gustavo Adolfo Vazquez Tostado", "e": "g.vazquez.tostado@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Hugo Rivas Armenta", "e": "h.rivas.armenta@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Jose Apolinar Beltran Gonzalez", "e": "j.beltran.gonzalez@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Jose De Jesus Perez Salazar", "e": "jperezs@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio Sr"}, {"n": "Jose Guadalupe Enciso Sanchez", "e": "j.enciso.sanchez@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Hombre", "p": "Product Genius"}, {"n": "Karely Guadalupe Moreno Norzagaray", "e": "k.moreno.norzagaray@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Liliana Judith Valencia Herrera", "e": "l.valencia.herrera@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Luis Alberto Navarrete Gutierrez", "e": "l.navarrete.gutierrez@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Magda Guadalupe Aguirre Quintana", "e": "m.aguirre.quintana@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Maria Del Rocio Huerta Gonzalez", "e": "m.huerta.gonzalez@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Mariana Lee Gomez", "e": "m.lee.gomez@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Marlene Cermeño Lopez", "e": "m.cermeno.lopez@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Misael Alejandro Sandoval Juarez", "e": "msandovalj@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Nallely Del Carmen Urrutia Gutierrez", "e": "n.urrutia.gutierrez@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Natalia Valdivia Atienza", "e": "n.valdivia.atienza@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Product Genius"}, {"n": "Nidra Thayry Romero Padrino", "e": "n.romero.padrino@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Paulina Moreno Guzman", "e": "p.moreno.guzman@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Perla Gabriela Suarez Salvador", "e": "p.suarez.salvador@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Refugio Alcocer Dorado", "e": "r.alcocer.dorado@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Sergio Guerrero Covarrubias", "e": "sguerrero@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Hombre", "p": "Gerente Regional Queretaro"}, {"n": "Victoria Montcerrath Gonzalez Lopez", "e": "v.gonzalez.lopez@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Yenia Alejandra Ventura Ochoa", "e": "y.ventura.ochoa@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Zurisadai Mercado Galindo", "e": "z.mercado.galindo@hulifestyle.mx", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Karen Abigail Hernandez Fuentes", "e": "kahernandez@hogaresunion.com", "r": "QUERETARO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Auxiliar De Mercadotecnia"}, {"n": "Lizbet Fernanda Mendoza Del Razo", "e": "lmendoza@hogaresunion.com", "r": "QUERETARO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Coordinador De Marketing Queretaro"}, {"n": "Alinne Izaskum Hernandez Moreno", "e": "aihernandezm@hulifestyle.mx", "r": "QUERETARO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Coordinador De Servicios Financieros"}, {"n": "David Villanueva Reynoso", "e": "dvillanueva@hogaresunion.mx", "r": "QUERETARO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Gerente De Soluciones Y Servicios Financieros"}, {"n": "Emilia Andrea Marquez Almea", "e": "emarquez@hulifestyle.mx", "r": "QUERETARO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Coordinador De Titulacion"}, {"n": "Fernanda Elisarraraz Garcia", "e": "felisarraraz@hulifestyle.mx", "r": "QUERETARO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Servicios Financieros"}, {"n": "Lidia Graciela Sauceda Martinez", "e": "lgsauceda@hulifestyle.mx", "r": "QUERETARO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Especialista En Titulacion"}, {"n": "Clementina Salinas Ruiz", "e": "csalinas@hogaresunion.com", "r": "QUERETARO", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Karla Regina Alvarez Bueno", "e": "kralvarez@hulifestyle.mx", "r": "QUERETARO", "a": "VENTAS", "s": "Mujer", "p": "Becario"}, {"n": "Ana Paula Reyes Garcia", "e": "apreyes@gim.mx", "r": "RESIDENCIAL", "a": "COMERCIAL", "s": "Mujer", "p": "Gerente Business Manager Bosque Real"}, {"n": "Edgar Daniel Angarita Quintana", "e": "edangaritaq@meriden.com.mx", "r": "RESIDENCIAL", "a": "COMERCIAL", "s": "Hombre", "p": "Gerente Business Manager Meriden"}, {"n": "Maria Fernanda Ventura Ruiz", "e": "mventura@gim.mx", "r": "RESIDENCIAL", "a": "COMERCIAL", "s": "Mujer", "p": "Gerente Business Manager Legacy"}, {"n": "Alejandra Del Carmen Estrella Farfan", "e": "aestrella@meriden.com.mx", "r": "RESIDENCIAL", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Coordinador De Marketing Meriden"}, {"n": "Aranza Eugenia Marrufo Victoria", "e": "amarrufo@hogaresunion.mx", "r": "RESIDENCIAL", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Especialista En Contenidos Gim Ls"}, {"n": "Emilio Gil Rodriguez", "e": "erodriguez@hogaresunion.mx", "r": "RESIDENCIAL", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Head Of Brand & Cx"}, {"n": "Elizabeth Villa Lopez", "e": "evilla@centralparkbosquereal.com", "r": "RESIDENCIAL", "a": "VENTAS", "s": "Mujer", "p": "Asesor Residencial"}, {"n": "Fibi Gabriela Romero Valdez", "e": "gromerov@hogaresunion.com", "r": "RESIDENCIAL", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Jackelinne Buzali Bazbaz", "e": "jbuzali@centralparkbosquereal.com", "r": "RESIDENCIAL", "a": "VENTAS", "s": "Mujer", "p": "Asesor Residencial"}, {"n": "Karena Alejandra Acevedo Arjona", "e": "kacevedo@meriden.com.mx", "r": "RESIDENCIAL", "a": "VENTAS", "s": "Mujer", "p": "Asesor Residencial"}, {"n": "Monica Ivette Fernandez Ascension", "e": "mifernandez@hogaresunion.com", "r": "RESIDENCIAL", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Nadia Irais Zapata Palomo", "e": "nzapata@meriden.com.mx", "r": "RESIDENCIAL", "a": "VENTAS", "s": "Mujer", "p": "Especialista En Administracion De Ventas"}, {"n": "Raquel Edith Lañin", "e": "rbreiman@centralparkbosquereal.com", "r": "RESIDENCIAL", "a": "VENTAS", "s": "Mujer", "p": "Asesor Residencial"}, {"n": "Sandra Mercado Colin", "e": "smercado@gim.mx", "r": "RESIDENCIAL", "a": "VENTAS", "s": "Mujer", "p": "Analista Administrativo"}, {"n": "Sharon Daniela Zuñiga Varela", "e": "szunigav@meriden.com.mx", "r": "RESIDENCIAL", "a": "VENTAS", "s": "Mujer", "p": "Asesor Residencial"}, {"n": "Alan Emiliano Altuzar Gonzalez", "e": "a.altuzar.gonzalez@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Alejandro De Jesus Jimenez Orozco", "e": "a.jimenez.orozco@hulifestyle.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Alma Delia Hernandez Meza", "e": "a.hernandez.meza@hulifestyle.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Axel Matias Aguirre Do Pazo", "e": "a.aguirre@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Berenice Lopez Hermosillo", "e": "b.lopez.hermosillo@hulifestyle.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Betzabe Aguilar Alvarez", "e": "b.aguilar@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Brenda Giaremmi Rodriguez Rios", "e": "brodriguez@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Bryan Adam Rosales Quintana", "e": "b.rosales.quintana@hulifestyle.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Carlos Francisco De La O Fierro", "e": "cfdelaof@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Carlos Suarez Garza", "e": "csuarez@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Gerente Regional Quintana Roo"}, {"n": "Cesar Augusto Pacheco Silva", "e": "c.pacheco@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Cesar German Jimenez Rosario", "e": "cejimenez@hulifestyle.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Claudia America Lopez Gonzalez", "e": "c.lopez.gonzalez@hulifestyle.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Daniel Aaron Vidal Gudiño", "e": "d.vidal.gudino@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Elisa Avila Torres", "e": "elavilat@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Elsa Carolina Gordon Carrizales", "e": "egordon@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Lider De Unidad De Negocio"}, {"n": "Emmanuel Cardona Gutierrez", "e": "e.cardona.gutierrez@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Estrella Yesenia San Pedro Perez", "e": "e.sanpedro.perez@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Gerardo Josue Diaz Chimil", "e": "g.diaz.chimil@hulifestyle.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Gerardo Raul Olascoaga Alejandri", "e": "g.olascoaga.alejandri@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Guillermo Ismael Avila Delgado", "e": "g.avila@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Hercila Amalia Barragan Vera", "e": "h.barragan.vera@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Ines Madrigal Gonzalez", "e": "e.madrigal@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Irving Jair Herrera Carbajal", "e": "i.herrera.carbajal@hulifestyle.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Jaqueline Tapia Gutierrrez", "e": "jtapia@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Lider De Unidad De Negocio"}, {"n": "Joel Anselmo Cano Hoil", "e": "j.cano.hoil@hulifestyle.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Jordana Monserrat Maya Lopez", "e": "jmmaya@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Lider De Unidad De Negocio"}, {"n": "Jorge Alejandro Baldamis Garcia", "e": "j.baldamis.garcia@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Jose Noe Lugo Morales", "e": "j.lugo.morales@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Juan Carlos Hernandez Anguiano", "e": "j.hernandez.anguiano@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Julian Andres Montoya Caicedo", "e": "j.montoya.caicedo@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Karla Patricia Perez Rosario", "e": "kpperezr@hulifestyle.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Leonardo Isai Olascoaga Moreno", "e": "l.olascoaga@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Leopoldo Joaquin Be Mena", "e": "l.bem@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Lesliee Silvia Garcia Garcia", "e": "l.garcia.garcia@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Lesly Fernanda Olvera Felix", "e": "l.olveraf@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Lesly Patricia Benitez Rosas", "e": "l.benitez@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Lizbeth Plata Fraga", "e": "l.plata.fraga@hulifestyle.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Luz Del Carmen Valencia Uribe", "e": "l.valencia.uribe@hulifestyle.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Mara Rios Leal", "e": "marios@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Margarita Delfina Godinez De Leon", "e": "m.godinez@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Maria Asuncion Hu Canche", "e": "m.hu.canche@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Maria Beatriz Uc Castro", "e": "mcastro@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Maria Elena Rodriguez Reyes", "e": "m.rodriguez@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Maria Veronica Garcia Rangel", "e": "m.garcia.rangel@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Marisol Ramirez Suarez", "e": "m.ramirez.suarez@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Melisa Jenifer Rios Rodriguez", "e": "m.rios.rodriguez@hulifestyle.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Mikhael Alexander Gomez Tellez", "e": "m.gomez.tellez@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Miriam Ferman Agustin", "e": "m.ferman@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Nelly Hernandez Pedraza", "e": "nhernandezp@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Olga Marleni Herrera Chable", "e": "o.herrera.chable@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Olivia Del Socorro Guzman Hernandez", "e": "oguzman@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Lider De Unidad De Negocio"}, {"n": "Omar Daniel Garcia Rodriguez", "e": "o.garcia.rodriguez@hulifestyle.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Oscar Zavala Gonzalez", "e": "o.zavala.gonzalez@hulifestyle.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Paola Carolina Bobadilla Gonzalez", "e": "p.bobadilla.gonzalez@hulifestyle.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Patricia Adyade Aguiñaga Cardenas", "e": "p.aguinaga.cardenas@hulifestyle.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Product Genius"}, {"n": "Perla Aglae Garcia Manzano", "e": "pgarciam@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Lider De Unidad De Negocio"}, {"n": "Rodolfo Erick Gaspar Olascuaga", "e": "r.gaspar.olascuaga@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Stefany Naomi Vera Cetina", "e": "s.verac@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Tamara Darahi Caamal Geronimo", "e": "t.caamal.geronimo@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Tomasita Rosina Uh Alvarado", "e": "talvarado@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Xiomara Natali Aguirre Bañol", "e": "x.aguirre.banol@hogaresunion.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Yuridiana Vega Cortez", "e": "y.vega.cortez@hulifestyle.mx", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Diana Castañeda Casillas", "e": "dcasillas@hogaresunion.mx", "r": "SURESTE", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Coordinador De Marketing Playa Del Carmen"}, {"n": "Jose Eduardo Lopez Sanchez", "e": "jelopez@hogaresunion.mx", "r": "SURESTE", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Coordinador De Mercadotecnia"}, {"n": "Brain Elizabeth Florencio Puentes", "e": "bflorencio@hogaresunion.mx", "r": "SURESTE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Auxiliar Administrativo"}, {"n": "Carlos Pablo Perez Cob", "e": "cperezc@hogaresunion.mx", "r": "SURESTE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Especialista En Titulacion"}, {"n": "Dalia Odelinda Mendoza Ambrosio", "e": "dmendoza@hogaresunion.mx", "r": "SURESTE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Coordinador De Servicios Financieros"}, {"n": "Dulce Maria Jimenez Ek", "e": "djimenez@hogaresunion.mx", "r": "SURESTE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Servicios Financieros"}, {"n": "Federico Antonio Mata Hernandez", "e": "fmata@hogaresunion.mx", "r": "SURESTE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Gerente De Soluciones Y Servicios Financieros"}, {"n": "Guadalupe Elizabeth Montero Rodriguez", "e": "gmontero@hogaresunion.mx", "r": "SURESTE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Servicios Financieros"}, {"n": "Jared Vivar Meza", "e": "jvivar@hogaresunion.mx", "r": "SURESTE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Coordinador De Titulacion"}, {"n": "Luis Felipe Pineda Estrella", "e": "lpineda@hogaresunion.com", "r": "SURESTE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Especialista En Titulacion"}, {"n": "Luis Manuel Cruz Tercero", "e": "lucruz@hogaresunion.com", "r": "SURESTE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista De Soluciones Financieras"}, {"n": "Maria Del Carmen Tziu Martinez", "e": "mtziu@hogaresunion.mx", "r": "SURESTE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Especialista En Titulacion"}, {"n": "Maria Guadalupe Galaz Cetina", "e": "mgalaz@hogaresunion.mx", "r": "SURESTE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Coordinador De Titulacion"}, {"n": "Olga Lidia Alayola Ortiz", "e": "oalayola@hogaresunion.mx", "r": "SURESTE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Especialista En Cobranza Institucional"}, {"n": "Sergio Alexander Cruz De La Cruz", "e": "scruz@hogaresunion.mx", "r": "SURESTE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Especialista En Titulacion"}, {"n": "Cristal Rodriguez Barrios", "e": "crodriguezb@hogaresunion.com", "r": "SURESTE", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Jose Luis Camacho Lizarraga", "e": "jcamachol@hogaresunion.mx", "r": "SURESTE", "a": "VENTAS", "s": "Hombre", "p": "Director Regional Sureste"}, {"n": "Olga Maria Oxte May", "e": "omoxte@hogaresunion.com", "r": "SURESTE", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}], "regions": [{"region": "CENTRO", "areas": [{"area": "COMERCIAL", "Hombre": 47, "Mujer": 76, "Total": 123}, {"area": "MERCADOTECNIA", "Hombre": 2, "Mujer": 1, "Total": 3}, {"area": "SOLUCIONES Y SERVICIOS FINANCIEROS", "Hombre": 7, "Mujer": 11, "Total": 18}, {"area": "VENTAS", "Hombre": 0, "Mujer": 6, "Total": 6}], "tot": {"Hombre": 56, "Mujer": 94, "Total": 150}}, {"region": "CORPORATIVO", "areas": [{"area": "CENTRO DE ENTRENAMIENTO COMERCIAL", "Hombre": 10, "Mujer": 10, "Total": 20}, {"area": "COMERCIAL", "Hombre": 1, "Mujer": 0, "Total": 1}, {"area": "COMERCIALIZACION", "Hombre": 2, "Mujer": 1, "Total": 3}, {"area": "ENGAGEMENT CENTER", "Hombre": 15, "Mujer": 16, "Total": 31}, {"area": "INNOVACION Y MEJORA CONTINUA", "Hombre": 7, "Mujer": 4, "Total": 11}, {"area": "INTELIGENCIA COMERCIAL", "Hombre": 7, "Mujer": 0, "Total": 7}, {"area": "MERCADOTECNIA", "Hombre": 10, "Mujer": 13, "Total": 23}, {"area": "SOLUCIONES Y SERVICIOS FINANCIEROS", "Hombre": 20, "Mujer": 16, "Total": 36}], "tot": {"Hombre": 72, "Mujer": 60, "Total": 132}}, {"region": "LIFESTYLE", "areas": [{"area": "COMERCIAL", "Hombre": 26, "Mujer": 46, "Total": 72}, {"area": "MERCADOTECNIA", "Hombre": 2, "Mujer": 1, "Total": 3}, {"area": "SOLUCIONES Y SERVICIOS FINANCIEROS", "Hombre": 7, "Mujer": 8, "Total": 15}, {"area": "VENTAS", "Hombre": 1, "Mujer": 3, "Total": 4}], "tot": {"Hombre": 36, "Mujer": 58, "Total": 94}}, {"region": "MORELOS-PUEBLA", "areas": [{"area": "COMERCIAL", "Hombre": 18, "Mujer": 30, "Total": 48}, {"area": "MERCADOTECNIA", "Hombre": 0, "Mujer": 1, "Total": 1}, {"area": "SOLUCIONES Y SERVICIOS FINANCIEROS", "Hombre": 2, "Mujer": 10, "Total": 12}, {"area": "VENTAS", "Hombre": 0, "Mujer": 4, "Total": 4}], "tot": {"Hombre": 20, "Mujer": 45, "Total": 65}}, {"region": "QUERETARO", "areas": [{"area": "COMERCIAL", "Hombre": 15, "Mujer": 18, "Total": 33}, {"area": "MERCADOTECNIA", "Hombre": 0, "Mujer": 2, "Total": 2}, {"area": "SOLUCIONES Y SERVICIOS FINANCIEROS", "Hombre": 1, "Mujer": 4, "Total": 5}, {"area": "VENTAS", "Hombre": 0, "Mujer": 2, "Total": 2}], "tot": {"Hombre": 16, "Mujer": 26, "Total": 42}}, {"region": "RESIDENCIAL", "areas": [{"area": "COMERCIAL", "Hombre": 1, "Mujer": 2, "Total": 3}, {"area": "MERCADOTECNIA", "Hombre": 1, "Mujer": 2, "Total": 3}, {"area": "VENTAS", "Hombre": 0, "Mujer": 9, "Total": 9}], "tot": {"Hombre": 2, "Mujer": 13, "Total": 15}}, {"region": "SURESTE", "areas": [{"area": "COMERCIAL", "Hombre": 24, "Mujer": 39, "Total": 63}, {"area": "MERCADOTECNIA", "Hombre": 1, "Mujer": 1, "Total": 2}, {"area": "SOLUCIONES Y SERVICIOS FINANCIEROS", "Hombre": 5, "Mujer": 8, "Total": 13}, {"area": "VENTAS", "Hombre": 1, "Mujer": 2, "Total": 3}], "tot": {"Hombre": 31, "Mujer": 50, "Total": 81}}], "grand": {"Hombre": 233, "Mujer": 346, "Total": 579}, "sizes": ["CH", "M", "G", "XL", "XXL"], "regionList": ["CENTRO", "CORPORATIVO", "LIFESTYLE", "MORELOS-PUEBLA", "QUERETARO", "RESIDENCIAL", "SURESTE"], "areasByRegion": {"CENTRO": ["COMERCIAL", "MERCADOTECNIA", "SOLUCIONES Y SERVICIOS FINANCIEROS", "VENTAS"], "CORPORATIVO": ["CENTRO DE ENTRENAMIENTO COMERCIAL", "COMERCIAL", "COMERCIALIZACION", "ENGAGEMENT CENTER", "INNOVACION Y MEJORA CONTINUA", "INTELIGENCIA COMERCIAL", "MERCADOTECNIA", "SOLUCIONES Y SERVICIOS FINANCIEROS"], "LIFESTYLE": ["COMERCIAL", "MERCADOTECNIA", "SOLUCIONES Y SERVICIOS FINANCIEROS", "VENTAS"], "MORELOS-PUEBLA": ["COMERCIAL", "MERCADOTECNIA", "SOLUCIONES Y SERVICIOS FINANCIEROS", "VENTAS"], "QUERETARO": ["COMERCIAL", "MERCADOTECNIA", "SOLUCIONES Y SERVICIOS FINANCIEROS", "VENTAS"], "RESIDENCIAL": ["COMERCIAL", "MERCADOTECNIA", "VENTAS"], "SURESTE": ["COMERCIAL", "MERCADOTECNIA", "SOLUCIONES Y SERVICIOS FINANCIEROS", "VENTAS"]}, "allAreas": ["CENTRO DE ENTRENAMIENTO COMERCIAL", "COMERCIAL", "COMERCIALIZACION", "ENGAGEMENT CENTER", "INNOVACION Y MEJORA CONTINUA", "INTELIGENCIA COMERCIAL", "MERCADOTECNIA", "SOLUCIONES Y SERVICIOS FINANCIEROS", "VENTAS"]};
+const SIZES = DATA.sizes;
+const SEXES = ["Mujer","Hombre"];
+// ==========================================================
+//  CONFIGURACIÓN — llena estos 3 valores antes de publicar
+// ==========================================================
+const SUPABASE_URL      = "https://usewhxkorrtplkbwbuxf.supabase.co";       // ej. https://xxxxx.supabase.co
+const SUPABASE_ANON_KEY = "sb_publishable_IKeiigfpphEdtQooHx59kA_nyWP6eMb";  // llave "Publishable" (sb_publishable_...) o "anon public"
+const ADMIN_CODE        = "CEC2026";               // contraseña de administrador (ver panel completo, exportar y borrar)
+// ==========================================================
+
+const PEOPLE = DATA.people.map((p,i)=>({...p,id:"p"+i}));
+let sizeState = {};       // id -> "CH" | ...
+let sb = null;            // cliente de Supabase
+let dbOK = false;         // ¿conectado a la base?
+
+// ---------- Supabase ----------
+function initSupabase(){
+  if(!window.supabase || SUPABASE_URL.startsWith("TU_") || SUPABASE_ANON_KEY.startsWith("TU_")){
+    dbOK=false; return false;
+  }
+  try{
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    dbOK=true; return true;
+  }catch(e){ dbOK=false; return false; }
+}
+
+// carga inicial de toda la base
+async function loadState(){
+  sizeState = {};
+  if(!dbOK) return;
+  try{
+    const {data,error} = await sb.from('tallas').select('person_id,size');
+    if(error) throw error;
+    (data||[]).forEach(r=>{ if(r.size) sizeState[r.person_id]=r.size; });
+  }catch(e){ setSaveState("error"); }
+}
+
+// escribe UNA persona (upsert) o la borra — no pisa a los demás
+async function persistOne(id,size){
+  if(!dbOK){ setSaveState("local"); return; }
+  setSaveState("saving");
+  try{
+    if(size){
+      const {error}=await sb.from('tallas').upsert({person_id:id,size:size,updated_at:new Date().toISOString()});
+      if(error) throw error;
+    }else{
+      const {error}=await sb.from('tallas').delete().eq('person_id',id);
+      if(error) throw error;
+    }
+    setSaveState("saved");
+  }catch(e){ setSaveState("error"); }
+}
+
+// relee todo desde la base y refresca la vista (botón Actualizar)
+async function syncFromRemote(){
+  const old={...sizeState};
+  await loadState();
+  applyStateToDOM(old, sizeState);
+  refreshCountsAndResumen();
+}
+
+// suscripción en tiempo real: refleja cambios de otros al instante
+function subscribeRealtime(){
+  if(!dbOK) return;
+  sb.channel('tallas-live')
+    .on('postgres_changes',{event:'*',schema:'public',table:'tallas'},payload=>{
+      const row = payload.new && payload.new.person_id ? payload.new : payload.old;
+      if(!row || !row.person_id) return;
+      const id=row.person_id;
+      const newSize = (payload.eventType==='DELETE') ? "" : (payload.new.size||"");
+      const old={[id]:sizeState[id]||""};
+      if(newSize) sizeState[id]=newSize; else delete sizeState[id];
+      applyStateToDOM(old,{[id]:newSize});
+      refreshCountsAndResumen();
+    })
+    .subscribe();
+}
+
+// aplica al DOM solo las filas cuyo valor cambió
+function applyStateToDOM(oldS, newS){
+  const ids=new Set([...Object.keys(oldS),...Object.keys(newS)]);
+  ids.forEach(id=>{
+    if((oldS[id]||"")===(newS[id]||"")) return;
+    const row=document.querySelector('#plist .prow[data-id="'+id+'"]');
+    if(!row) return;
+    const size=newS[id]||"";
+    row.querySelectorAll(".seg button").forEach(b=>b.classList.toggle("sel",b.dataset.size===size));
+    row.querySelector(".clr").hidden=!size;
+    row.classList.toggle("done",!!size);
+    row.dataset.done=size?"1":"0";
+  });
+}
+function refreshCountsAndResumen(){
+  const stat=document.getElementById("f-status").value;
+  if(stat!=="all") applyFilters(); else updateCounter();
+  recalcResumen();
+}
+
+function setSaveState(s){
+  const d=document.getElementById("save-dot"),t=document.getElementById("save-txt");
+  d.classList.remove("saving");
+  if(s==="saving"){d.classList.add("saving");t.textContent="Guardando…";}
+  else if(s==="error"){d.classList.add("saving");t.textContent="Error de conexión";}
+  else if(s==="local"){d.classList.add("saving");t.textContent="Sin base (solo local)";}
+  else{t.textContent="Guardado · en Supabase";}
+}
+
+// ---------- header ----------
+function fillSummary(){
+  c("c-total",DATA.grand.Total);c("c-h",DATA.grand.Hombre);c("c-m",DATA.grand.Mujer);c("c-reg",DATA.regions.length);
+  c("g-h",DATA.grand.Hombre);c("g-m",DATA.grand.Mujer);c("g-t",DATA.grand.Total);
+  function c(id,v){document.getElementById(id).textContent=v;}
+}
+
+// ---------- vista conteo ----------
+function renderConteo(){
+  const cont=document.getElementById("regions");cont.innerHTML="";
+  DATA.regions.forEach((R,ri)=>{
+    const div=document.createElement("div");
+    div.className="region"+(ri===0?" open":"");
+    div.dataset.region=R.region.toLowerCase();
+    div.dataset.areas=R.areas.map(a=>a.area.toLowerCase()).join(" ");
+    const rows=R.areas.map(a=>`<tr><td>${a.area}</td><td class="num">${a.Hombre}</td><td class="num">${a.Mujer}</td><td class="num">${a.Total}</td></tr>`).join("");
+    div.innerHTML=`
+      <div class="region-head">
+        <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 18 6-6-6-6"/></svg>
+        <span class="name">${R.region}</span>
+        <div class="mini">
+          <div class="cell"><span class="lbl">H</span><span class="val h num">${R.tot.Hombre}</span></div>
+          <div class="cell"><span class="lbl">M</span><span class="val m num">${R.tot.Mujer}</span></div>
+          <div class="cell"><span class="lbl">Total</span><span class="val num">${R.tot.Total}</span></div>
+        </div>
+      </div>
+      <div class="region-body">
+        <table class="conteo-t">
+          <thead><tr><th>Área / Departamento</th><th>Hombres</th><th>Mujeres</th><th>Total</th></tr></thead>
+          <tbody>${rows}</tbody>
+          <tfoot><tr><td>Total ${R.region}</td><td class="num">${R.tot.Hombre}</td><td class="num">${R.tot.Mujer}</td><td class="num">${R.tot.Total}</td></tr></tfoot>
+        </table>
+      </div>`;
+    div.querySelector(".region-head").addEventListener("click",()=>div.classList.toggle("open"));
+    cont.appendChild(div);
+  });
+}
+function applySearchConteo(q){
+  q=q.trim().toLowerCase();
+  document.querySelectorAll(".region").forEach(d=>{
+    const hit=!q||d.dataset.region.includes(q)||d.dataset.areas.includes(q);
+    d.style.display=hit?"":"none";
+    if(q&&hit)d.classList.add("open");
+  });
+}
+
+// ---------- filtros de tallas ----------
+function fillFilters(){
+  const fr=document.getElementById("f-region");
+  fr.innerHTML='<option value="">Todas las regiones</option>'+DATA.regionList.map(r=>`<option value="${r}">${r}</option>`).join("");
+  populateAreas("");
+}
+function populateAreas(region){
+  const fa=document.getElementById("f-area");
+  const list = region && DATA.areasByRegion[region] ? DATA.areasByRegion[region] : DATA.allAreas;
+  fa.innerHTML='<option value="">Todos los departamentos</option>'+list.map(a=>`<option value="${a}">${a}</option>`).join("");
+}
+
+// ---------- render personas ----------
+function renderPeople(){
+  const cont=document.getElementById("plist");
+  cont.innerHTML="";
+  const frag=document.createDocumentFragment();
+  PEOPLE.forEach(p=>{
+    const sel=sizeState[p.id]||"";
+    const row=document.createElement("div");
+    row.className="prow"+(sel?" done":"");
+    row.dataset.id=p.id;
+    row.dataset.region=p.r.toLowerCase();
+    row.dataset.area=p.a.toLowerCase();
+    row.dataset.name=p.n.toLowerCase();
+    row.dataset.done=sel?"1":"0";
+    const bcls=p.s==="Hombre"?"h":p.s==="Mujer"?"m":"o";
+    const blab=p.s==="Hombre"?"H":p.s==="Mujer"?"M":"—";
+    const segBtns=SIZES.map(s=>`<button data-size="${s}" class="${sel===s?"sel":""}">${s}</button>`).join("");
+    row.innerHTML=`
+      <div class="pinfo">
+        <div class="pname"><span class="badge ${bcls}">${blab}</span>${p.n}</div>
+        <div class="pmeta">${p.r} · ${p.a}${p.p?" · "+p.p:""}</div>
+      </div>
+      <div class="seg">${segBtns}</div>
+      <button class="clr" title="Quitar talla" ${sel?"":"hidden"}>&times;</button>`;
+    const seg=row.querySelector(".seg");
+    seg.addEventListener("click",e=>{
+      const btn=e.target.closest("button[data-size]");if(!btn)return;
+      const size=btn.dataset.size;
+      setSize(row,p.id,sizeState[p.id]===size?"":size);
+    });
+    row.querySelector(".clr").addEventListener("click",()=>setSize(row,p.id,""));
+    frag.appendChild(row);
+  });
+  cont.appendChild(frag);
+  applyFilters();
+}
+function setSize(row,id,size){
+  if(size){sizeState[id]=size;}else{delete sizeState[id];}
+  row.querySelectorAll(".seg button").forEach(b=>b.classList.toggle("sel",b.dataset.size===size));
+  row.querySelector(".clr").hidden=!size;
+  row.classList.toggle("done",!!size);
+  row.dataset.done=size?"1":"0";
+  const stat=document.getElementById("f-status").value;
+  if(stat!=="all") applyFilters(); else updateCounter();
+  recalcResumen();
+  persistOne(id,size);
+}
+
+function applyFilters(){
+  const q=document.getElementById("search-p").value.trim().toLowerCase();
+  const reg=document.getElementById("f-region").value.toLowerCase();
+  const area=document.getElementById("f-area").value.toLowerCase();
+  const stat=document.getElementById("f-status").value;
+  let shown=0;
+  document.querySelectorAll("#plist .prow").forEach(r=>{
+    let ok=true;
+    if(reg && r.dataset.region!==reg) ok=false;
+    if(area && r.dataset.area!==area) ok=false;
+    if(q && !r.dataset.name.includes(q)) ok=false;
+    if(stat==="pend" && r.dataset.done==="1") ok=false;
+    if(stat==="done" && r.dataset.done==="0") ok=false;
+    r.style.display=ok?"":"none";
+    if(ok)shown++;
+  });
+  const list=document.getElementById("plist");
+  let e=document.getElementById("empty-msg");
+  if(shown===0){
+    if(!e){e=document.createElement("div");e.id="empty-msg";e.className="empty";e.textContent="No hay personas que coincidan con estos filtros.";list.appendChild(e);}
+    e.style.display="";
+  }else if(e){e.style.display="none";}
+  updateCounter(shown);
+}
+function updateCounter(shown){
+  if(shown===undefined){shown=[...document.querySelectorAll("#plist .prow")].filter(r=>r.style.display!=="none").length;}
+  document.getElementById("cnt-shown").textContent=shown;
+  document.getElementById("cnt-total").textContent=PEOPLE.length;
+  document.getElementById("cnt-pend").textContent=PEOPLE.length-Object.keys(sizeState).length;
+}
+
+// ---------- resumen ----------
+function recalcResumen(){
+  const totals={};SEXES.concat(["Otro"]).forEach(sx=>{totals[sx]={};SIZES.forEach(s=>totals[sx][s]=0);});
+  PEOPLE.forEach(p=>{const s=sizeState[p.id];if(!s)return;const sx=totals[p.s]?p.s:"Otro";totals[sx][s]++;});
+  const grand={};SIZES.forEach(s=>grand[s]=0);let gAll=0;let html="";
+  const map={"Mujer":"m","Hombre":"h","Otro":"o"};
+  ["Mujer","Hombre"].forEach(sx=>{
+    let rt=0;const cells=SIZES.map(s=>{rt+=totals[sx][s];grand[s]+=totals[sx][s];return `<td>${totals[sx][s]}</td>`;}).join("");
+    gAll+=rt;html+=`<tr><td><span class="badge ${map[sx]}">${map[sx].toUpperCase()}</span> ${sx}</td>${cells}<td class="big">${rt}</td></tr>`;
+  });
+  // fila "Otro" solo si aplica
+  let ot=0;SIZES.forEach(s=>ot+=totals["Otro"][s]);
+  if(ot>0){const cells=SIZES.map(s=>{grand[s]+=totals["Otro"][s];return `<td>${totals["Otro"][s]}</td>`;}).join("");gAll+=ot;html+=`<tr><td>Sin sexo definido</td>${cells}<td class="big">${ot}</td></tr>`;}
+  html+=`<tr class="tot"><td>Total general</td>${SIZES.map(s=>`<td>${grand[s]}</td>`).join("")}<td class="big">${gAll}</td></tr>`;
+  document.getElementById("res-body").innerHTML=html;
+}
+function renderResHead(){
+  document.getElementById("res-head").innerHTML=`<tr><th>Sexo</th>${SIZES.map(s=>`<th>${s}</th>`).join("")}<th>Total</th></tr>`;
+}
+
+// ---------- export ----------
+function buildDetail(){
+  const rows=[["Nombre","Región","Departamento","Sexo","Puesto","Talla"]];
+  PEOPLE.forEach(p=>rows.push([p.n,p.r,p.a,p.s,p.p,sizeState[p.id]||""]));
+  return rows;
+}
+function buildResumen(){
+  const totals={};["Mujer","Hombre","Otro"].forEach(sx=>{totals[sx]={};SIZES.forEach(s=>totals[sx][s]=0);});
+  PEOPLE.forEach(p=>{const s=sizeState[p.id];if(!s)return;const sx=totals[p.s]?p.s:"Otro";totals[sx][s]++;});
+  const rows=[["Sexo",...SIZES,"Total"]];const grand={};SIZES.forEach(s=>grand[s]=0);let gAll=0;
+  ["Mujer","Hombre","Otro"].forEach(sx=>{
+    let t=0;const c=SIZES.map(s=>{t+=totals[sx][s];grand[s]+=totals[sx][s];return totals[sx][s];});
+    if(sx==="Otro"&&t===0)return;gAll+=t;rows.push([sx,...c,t]);
+  });
+  rows.push(["Total general",...SIZES.map(s=>grand[s]),gAll]);
+  return rows;
+}
+function exportXLSX(){
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(buildResumen()),"Resumen");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(buildDetail()),"Detalle por persona");
+  XLSX.writeFile(wb,"pedido_playeras.xlsx");
+}
+function exportCSV(){
+  const csv=buildDetail().map(r=>r.map(c=>{c=String(c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c;}).join(",")).join("\n");
+  const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"});
+  const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="pedido_playeras.csv";a.click();URL.revokeObjectURL(url);
+}
+
+// ---------- wiring ----------
+function initEvents(){
+  document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");document.getElementById("view-"+t.dataset.view).classList.add("active");
+  }));
+  document.getElementById("search-c").addEventListener("input",e=>applySearchConteo(e.target.value));
+  document.getElementById("expand-all").addEventListener("click",()=>document.querySelectorAll(".region").forEach(d=>d.classList.add("open")));
+  document.getElementById("collapse-all").addEventListener("click",()=>document.querySelectorAll(".region").forEach(d=>d.classList.remove("open")));
+  document.getElementById("search-p").addEventListener("input",applyFilters);
+  document.getElementById("f-region").addEventListener("change",e=>{populateAreas(e.target.value);applyFilters();});
+  document.getElementById("f-area").addEventListener("change",applyFilters);
+  document.getElementById("f-status").addEventListener("change",applyFilters);
+  document.getElementById("export-xlsx").addEventListener("click",()=>{ if(requireAdmin()) exportXLSX(); });
+  document.getElementById("export-csv").addEventListener("click",()=>{ if(requireAdmin()) exportCSV(); });
+  document.getElementById("refresh").addEventListener("click",async()=>{
+    const b=document.getElementById("refresh");b.disabled=true;b.textContent="Actualizando…";
+    await syncFromRemote();
+    b.disabled=false;b.textContent="Actualizar";
+  });
+  document.getElementById("reset").addEventListener("click",async()=>{
+    if(!requireAdmin(true)) return;   // siempre pide contraseña (acción destructiva)
+    if(!confirm("Esto borra TODAS las tallas de la base compartida, para todos. El conteo de personas no cambia. ¿Continuar?")) return;
+    const old={...sizeState};
+    sizeState={};
+    if(dbOK){ try{ await sb.from('tallas').delete().neq('person_id',''); }catch(e){ setSaveState("error"); } }
+    applyStateToDOM(old,{});
+    refreshCountsAndResumen();setSaveState("saved");
+  });
+}
+
+// pide la contraseña de administrador; la recuerda durante la sesión.
+// Con force=true la pide siempre (para acciones destructivas como borrar).
+function requireAdmin(force){
+  if(!force && sessionStorage.getItem("admin_ok")==="1") return true;
+  const val=prompt("Contraseña de administrador:");
+  if(val===null) return false;               // canceló
+  if(val===ADMIN_CODE){ sessionStorage.setItem("admin_ok","1"); return true; }
+  alert("Contraseña de administrador incorrecta.");
+  return false;
+}
+
+// ---------- pantalla de acceso (empleado / admin) ----------
+function initGate(){
+  const gate=document.getElementById("gate");
+  const empBox=document.getElementById("gate-emp");
+  const admBox=document.getElementById("gate-adm");
+  const email=document.getElementById("gate-email");
+  const err=document.getElementById("gate-err");
+  const pass=document.getElementById("gate-pass");
+  const err2=document.getElementById("gate-err2");
+
+  document.getElementById("go-admin").addEventListener("click",e=>{e.preventDefault();empBox.style.display="none";admBox.style.display="block";pass.focus();});
+  document.getElementById("go-emp").addEventListener("click",e=>{e.preventDefault();admBox.style.display="none";empBox.style.display="block";email.focus();});
+
+  // empleado entra con correo
+  function tryEmp(){
+    const v=email.value.trim().toLowerCase();
+    if(!v){err.textContent="Escribe tu correo.";return;}
+    const person=PEOPLE.find(p=>p.e===v);
+    if(!person){err.textContent="No encontramos ese correo. Revisa que esté bien escrito o contacta a Recursos Humanos.";return;}
+    gate.classList.add("hidden");
+    startEmployee(person);
+  }
+  document.getElementById("gate-emp-btn").addEventListener("click",tryEmp);
+  email.addEventListener("keydown",e=>{ if(e.key==="Enter") tryEmp(); });
+
+  // admin entra con contraseña -> panel completo
+  function tryAdm(){
+    if(pass.value===ADMIN_CODE){
+      sessionStorage.setItem("admin_ok","1");
+      gate.classList.add("hidden");
+      startAdmin();
+    }else{ err2.textContent="Contraseña incorrecta.";pass.value="";pass.focus(); }
+  }
+  document.getElementById("gate-adm-btn").addEventListener("click",tryAdm);
+  pass.addEventListener("keydown",e=>{ if(e.key==="Enter") tryAdm(); });
+
+  email.focus();
+}
+
+// ---------- vista individual del empleado ----------
+async function startEmployee(person){
+  document.getElementById("emp-view").style.display="flex";
+  initSupabase();
+  // lee la talla actual de esta persona
+  let current="";
+  if(dbOK){
+    try{
+      const {data}=await sb.from('tallas').select('size').eq('person_id',person.id).maybeSingle();
+      if(data && data.size) current=data.size;
+    }catch(e){}
+  }
+  renderEmpCard(person,current,!!current); // si ya tiene talla, arranca bloqueado
+}
+
+function renderEmpCard(person,selected,locked){
+  const card=document.getElementById("emp-card");
+  const bcls=person.s==="Hombre"?"h":person.s==="Mujer"?"m":"o";
+  const blab=person.s==="Hombre"?"H":person.s==="Mujer"?"M":"—";
+  let chosen=selected;
+  card.innerHTML=`
+    <div class="emp-name"><span class="badge ${bcls}">${blab}</span> ${person.n}</div>
+    <div class="emp-meta">${person.r} · ${person.a}${person.p?" · "+person.p:""}</div>
+    <div class="emp-label">Elige tu talla</div>
+    <div class="emp-seg ${locked?'locked':''}" id="emp-seg">
+      ${SIZES.map(s=>`<button data-size="${s}" class="${selected===s?'sel':''}">${s}</button>`).join("")}
+    </div>
+    <div id="emp-action"></div>`;
+
+  const seg=card.querySelector("#emp-seg");
+  const action=card.querySelector("#emp-action");
+
+  function paintButtons(){ seg.querySelectorAll("button").forEach(b=>b.classList.toggle("sel",b.dataset.size===chosen)); }
+
+  function renderAction(state){
+    if(state==="locked"){
+      action.innerHTML=`<div class="emp-saved">✓ Talla guardada: ${chosen}
+        <button class="emp-edit" id="emp-edit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Editar</button></div>`;
+      action.querySelector("#emp-edit").addEventListener("click",()=>{
+        seg.classList.remove("locked");
+        renderAction("edit");
+      });
+    }else{
+      const btn=document.createElement("button");
+      btn.className="emp-save";btn.textContent="Guardar";
+      btn.disabled=!chosen;
+      btn.addEventListener("click",async()=>{
+        if(!chosen) return;
+        btn.disabled=true;btn.textContent="Guardando…";
+        let ok=true;
+        if(dbOK){
+          try{ const {error}=await sb.from('tallas').upsert({person_id:person.id,size:chosen,updated_at:new Date().toISOString()}); if(error) ok=false; }catch(e){ ok=false; }
+        }
+        if(ok){ seg.classList.add("locked"); renderAction("locked"); }
+        else { btn.disabled=false;btn.textContent="Guardar"; alert("No se pudo guardar. Revisa tu conexión e inténtalo de nuevo."); }
+      });
+      action.innerHTML="";action.appendChild(btn);
+    }
+  }
+
+  seg.addEventListener("click",e=>{
+    const b=e.target.closest("button[data-size]"); if(!b) return;
+    if(seg.classList.contains("locked")) return;
+    chosen = (chosen===b.dataset.size) ? "" : b.dataset.size;
+    paintButtons();
+    // habilita/inhabilita el botón guardar
+    const save=action.querySelector(".emp-save"); if(save) save.disabled=!chosen;
+  });
+
+  renderAction(locked?"locked":"edit");
+}
+
+document.getElementById("emp-exit").addEventListener("click",()=>{ location.reload(); });
+
+// ---------- panel completo (administrador) ----------
+async function startAdmin(){
+  document.querySelector(".wrap").style.display="";
+  fillSummary();
+  renderConteo();
+  renderResHead();
+  initSupabase();
+  await loadState();
+  fillFilters();
+  renderPeople();
+  recalcResumen();
+  initEvents();
+  subscribeRealtime();
+  setSaveState(dbOK ? "saved" : "local");
+}
+
+// arranque
+document.querySelector(".wrap").style.display="none";
+if(sessionStorage.getItem("admin_ok")==="1"){
+  document.getElementById("gate").classList.add("hidden");
+  startAdmin();
+}else{
+  initGate();
+}
+</script>
+</body>
+</html>
