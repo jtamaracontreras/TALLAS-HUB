@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Playeras del evento — Conteo y captura de tallas</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#161c28;--ink-2:#2a3446;--paper:#f4f6f9;--card:#ffffff;
+    --line:#dde3ec;--line-strong:#c3ccda;
+    --cobalt:#2f5fd0;--cobalt-soft:#e7edfb;
+    --violet:#8a4fd0;--violet-soft:#f0e6fb;
+    --green:#1f7a5c;--green-soft:#e2f3ec;
+    --amber:#b57612;--amber-soft:#fbf1dc;
+    --red:#c0392b;--red-soft:#fbe7e4;
+    --muted:#68738a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:'Inter',system-ui,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto;padding:22px 18px 90px}
+  h1,h2,h3{font-family:'Space Grotesk',sans-serif;margin:0}
+  .num{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums}
+
+  .head{margin-bottom:18px}
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--cobalt);font-weight:600}
+  .head h1{font-size:30px;font-weight:700;letter-spacing:-.01em;margin:4px 0 2px}
+  .head p{margin:0;color:var(--muted);font-size:14px}
+  .chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+  .chip{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;min-width:120px}
+  .chip .k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .chip .v{font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;line-height:1.1;margin-top:2px}
+  .chip.h .v{color:var(--cobalt)} .chip.m .v{color:var(--violet)}
+
+  .tabs{display:flex;gap:6px;margin:22px 0 16px;border-bottom:2px solid var(--line)}
+  .tab{appearance:none;border:none;background:none;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;color:var(--muted);padding:10px 14px;border-bottom:3px solid transparent;margin-bottom:-2px;display:flex;align-items:center;gap:8px}
+  .tab .n{font-family:'IBM Plex Mono',monospace;font-size:12px;background:var(--line);color:var(--ink-2);border-radius:6px;padding:1px 7px}
+  .tab.active{color:var(--ink);border-bottom-color:var(--cobalt)}
+  .tab.active .n{background:var(--cobalt);color:#fff}
+  .view{display:none} .view.active{display:block}
+
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+  .search{flex:1;min-width:200px;position:relative}
+  .search input{width:100%;border:1px solid var(--line-strong);border-radius:10px;padding:9px 12px 9px 34px;font:inherit;background:var(--card)}
+  .search input:focus{outline:2px solid var(--cobalt-soft);border-color:var(--cobalt)}
+  .search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted)}
+  select.flt{border:1px solid var(--line-strong);border-radius:10px;padding:9px 12px;font:inherit;background:var(--card);color:var(--ink);max-width:230px}
+  select.flt:focus{outline:2px solid var(--cobalt-soft);border-color:var(--cobalt)}
+  .btn{appearance:none;cursor:pointer;font:inherit;font-weight:600;border-radius:10px;padding:9px 14px;border:1px solid var(--line-strong);background:var(--card);color:var(--ink);display:inline-flex;align-items:center;gap:7px}
+  .btn:hover{border-color:var(--cobalt);color:var(--cobalt)}
+  .btn.primary{background:var(--cobalt);border-color:var(--cobalt);color:#fff}
+  .btn.primary:hover{background:#254dab}
+  .btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+  .btn.ghost:hover{color:var(--red)}
+
+  /* conteo */
+  .region{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:10px;overflow:hidden}
+  .region-head{display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;user-select:none}
+  .region-head:hover{background:#fafbfe}
+  .region-head .name{font-family:'Space Grotesk';font-weight:600;font-size:17px;flex:1;display:flex;align-items:center;gap:10px}
+  .chev{transition:transform .18s ease;color:var(--muted)}
+  .region.open .chev{transform:rotate(90deg)}
+  .mini{display:flex;gap:16px;align-items:center}
+  .mini .cell{text-align:right;min-width:52px}
+  .mini .lbl{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;display:block}
+  .mini .val{font-family:'IBM Plex Mono';font-weight:600;font-size:16px}
+  .val.h{color:var(--cobalt)} .val.m{color:var(--violet)}
+  .region-body{display:none;border-top:1px solid var(--line)} .region.open .region-body{display:block}
+  table{width:100%;border-collapse:collapse}
+  .conteo-t th,.conteo-t td{padding:9px 16px;text-align:right;font-size:14px;border-bottom:1px solid var(--line)}
+  .conteo-t th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;background:#fafbfe}
+  .conteo-t th:first-child,.conteo-t td:first-child{text-align:left}
+  .conteo-t td:first-child{font-weight:500}
+  .conteo-t tr:last-child td{border-bottom:none}
+  .conteo-t td.num{font-family:'IBM Plex Mono'}
+  .conteo-t tfoot td{font-weight:700;background:#f4f6f9;border-top:2px solid var(--line-strong)}
+  .grand{background:var(--ink);color:#fff;border-radius:14px;padding:16px 18px;margin-top:14px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+  .grand .t{font-family:'Space Grotesk';font-weight:600;font-size:16px;flex:1}
+  .grand .cell{text-align:right}
+  .grand .lbl{font-size:10px;letter-spacing:.1em;text-transform:uppercase;opacity:.7;font-weight:600;display:block}
+  .grand .v{font-family:'IBM Plex Mono';font-size:22px;font-weight:600}
+
+  /* captura por persona */
+  .savebar{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-left:auto}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--green)} .dot.saving{background:var(--amber)}
+  .filterbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+  .note{background:var(--cobalt-soft);border:1px solid #cfdcf7;color:var(--ink-2);border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:12px;display:flex;gap:9px;align-items:flex-start}
+  /* pantalla de acceso */
+  #gate{position:fixed;inset:0;background:var(--ink);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
+  #gate.hidden{display:none}
+  .gate-card{background:var(--card);border-radius:16px;padding:30px 26px;max-width:360px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+  .gate-card .eyebrow{color:var(--cobalt);justify-content:center;margin-bottom:6px}
+  .gate-card h2{font-family:'Space Grotesk';font-size:22px;margin:0 0 4px}
+  .gate-card p{color:var(--muted);font-size:13px;margin:0 0 18px}
+  .gate-card input{width:100%;border:1px solid var(--line-strong);border-radius:10px;padding:11px 12px;font:inherit;text-align:center;margin-bottom:10px}
+  .gate-card input:focus{outline:2px solid var(--cobalt-soft);border-color:var(--cobalt)}
+  .gate-card .err{color:var(--red);font-size:13px;font-weight:600;min-height:18px;margin-bottom:4px}
+  .gate-card button{width:100%;background:var(--cobalt);color:#fff;border:none;border-radius:10px;padding:11px;font:inherit;font-weight:600;cursor:pointer}
+  .gate-card button:hover{background:#254dab}
+  .counter{font-size:13px;color:var(--muted);margin:0 0 12px;display:flex;gap:14px;flex-wrap:wrap}
+  .counter b{color:var(--ink);font-family:'IBM Plex Mono'}
+  .counter .pend{color:var(--amber)}
+
+  .plist{display:flex;flex-direction:column;gap:8px}
+  .prow{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .prow.done{border-color:#bfe0d2;background:#fbfefc}
+  .pinfo{flex:1;min-width:220px}
+  .pname{font-weight:600;font-size:15px;display:flex;align-items:center;gap:8px}
+  .pmeta{font-size:12px;color:var(--muted);margin-top:1px}
+  .badge{font-size:10px;font-weight:700;border-radius:5px;padding:1px 6px;font-family:'IBM Plex Mono'}
+  .badge.h{background:var(--cobalt-soft);color:var(--cobalt)} .badge.m{background:var(--violet-soft);color:var(--violet)} .badge.o{background:#eceff4;color:var(--muted)}
+  .seg{display:inline-flex;border:1px solid var(--line-strong);border-radius:9px;overflow:hidden;flex-shrink:0}
+  .seg button{appearance:none;border:none;background:#fff;cursor:pointer;font-family:'IBM Plex Mono';font-weight:600;font-size:14px;color:var(--ink-2);padding:7px 0;width:46px;border-right:1px solid var(--line)}
+  .seg button:last-child{border-right:none}
+  .seg button:hover{background:var(--cobalt-soft)}
+  .seg button.sel{background:var(--cobalt);color:#fff}
+  .clr{appearance:none;border:none;background:none;cursor:pointer;color:var(--muted);font-size:18px;line-height:1;padding:4px 6px;border-radius:6px;flex-shrink:0}
+  .clr:hover{color:var(--red);background:var(--red-soft)}
+  .clr[hidden]{display:none}
+  .empty{text-align:center;color:var(--muted);padding:40px 16px;background:var(--card);border:1px dashed var(--line-strong);border-radius:12px}
+
+  .resumen{margin-top:18px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+  .resumen h3{font-size:16px;margin-bottom:2px}
+  .resumen p{color:var(--muted);font-size:13px;margin:0 0 14px}
+  .res-t th,.res-t td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:center;font-family:'IBM Plex Mono';font-weight:600}
+  .res-t th{font-family:'Inter';font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:700;background:#fafbfe}
+  .res-t td:first-child,.res-t th:first-child{text-align:left;font-family:'Inter'}
+  .res-t tr.tot td{font-weight:700;background:#f4f6f9;border-top:2px solid var(--line-strong)}
+  .res-t td.big{font-size:16px}
+
+  @media(max-width:560px){
+    .head h1{font-size:24px}
+    .chip{flex:1;min-width:0}
+    select.flt{max-width:none;flex:1}
+    .prow{gap:10px}
+    .seg button{width:40px;font-size:13px}
+  }
+</style>
+</head>
+<body>
+<div id="gate">
+  <div class="gate-card">
+    <div class="eyebrow">Evento · Pedido de playeras</div>
+    <h2>Acceso</h2>
+    <p>Escribe la contraseña que te compartieron para capturar tallas.</p>
+    <input id="gate-input" type="password" placeholder="Contraseña" autocomplete="off">
+    <div class="err" id="gate-err"></div>
+    <button id="gate-btn">Entrar</button>
+  </div>
+</div>
+<div class="wrap">
+  <div class="head">
+    <div class="eyebrow">Evento · Pedido de playeras</div>
+    <h1>Conteo y captura de tallas</h1>
+    <p>Cuenta la plantilla por región y área, y captura la talla de cada persona.</p>
+    <div class="chips">
+      <div class="chip"><span class="k">Empleados</span><span class="v num" id="c-total">0</span></div>
+      <div class="chip h"><span class="k">Hombres</span><span class="v num" id="c-h">0</span></div>
+      <div class="chip m"><span class="k">Mujeres</span><span class="v num" id="c-m">0</span></div>
+      <div class="chip"><span class="k">Regiones</span><span class="v num" id="c-reg">0</span></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-view="conteo"><span class="n">1</span> Conteo por región</button>
+    <button class="tab" data-view="tallas"><span class="n">2</span> Captura de tallas</button>
+  </div>
+
+  <!-- VIEW 1 -->
+  <section class="view active" id="view-conteo">
+    <div class="toolbar">
+      <div class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="search-c" type="text" placeholder="Buscar región o área…">
+      </div>
+      <button class="btn" id="expand-all">Expandir todo</button>
+      <button class="btn" id="collapse-all">Contraer todo</button>
+    </div>
+    <div id="regions"></div>
+    <div class="grand">
+      <span class="t">Total general de la empresa</span>
+      <div class="cell"><span class="lbl">Hombres</span><span class="v num" id="g-h">0</span></div>
+      <div class="cell"><span class="lbl">Mujeres</span><span class="v num" id="g-m">0</span></div>
+      <div class="cell"><span class="lbl">Total</span><span class="v num" id="g-t">0</span></div>
+    </div>
+  </section>
+
+  <!-- VIEW 2 -->
+  <section class="view" id="view-tallas">
+    <div class="filterbar">
+      <div class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="search-p" type="text" placeholder="Buscar por nombre…">
+      </div>
+      <select class="flt" id="f-region"></select>
+      <select class="flt" id="f-area"></select>
+      <select class="flt" id="f-status">
+        <option value="all">Todas</option>
+        <option value="pend">Sin talla</option>
+        <option value="done">Con talla</option>
+      </select>
+      <button class="btn" id="refresh">Actualizar</button>
+      <div class="savebar"><span class="dot" id="save-dot"></span><span id="save-txt">Guardado</span></div>
+    </div>
+    <div class="note">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;margin-top:1px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span><b>Base compartida en tiempo real:</b> todo lo que capture cualquier persona con acceso se guarda en una sola base común y aparece al instante para los demás. Si algo no se actualiza, toca <b>Actualizar</b>.</span>
+    </div>
+    <div class="counter">
+      <span>Mostrando <b id="cnt-shown">0</b> de <b id="cnt-total">0</b> personas</span>
+      <span class="pend">Sin talla: <b id="cnt-pend">0</b></span>
+    </div>
+    <div class="plist" id="plist"></div>
+
+    <div class="resumen">
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px">
+        <div style="flex:1;min-width:200px">
+          <h3>Resumen del pedido</h3>
+          <p style="margin:0">Total de playeras por talla — según lo capturado. Esto es lo que entregas a compras.</p>
+        </div>
+        <button class="btn primary" id="export-xlsx">Exportar a Excel</button>
+        <button class="btn" id="export-csv">Exportar CSV</button>
+        <button class="btn ghost" id="reset">Borrar tallas</button>
+      </div>
+      <table class="res-t">
+        <thead id="res-head"></thead>
+        <tbody id="res-body"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script>
+const DATA = {"people": [{"n": "Hector Fernando Pacheco Perez", "r": "BDI", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Aime Andrea Lugo Hernandez", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Alberto Jeronimo Mendoza Vazquez", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Alma Aide Juarez Malpica", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Alma Rosa Martinez Duran", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Alvaro Rolando Cabriada Arzola", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Director Regional Centro"}, {"n": "Ana Fabiola Gutierrez Velazquez", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Ana Karen Castillo Morales", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Ana Karen Del Alto Nepomuseno", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Ana Patricia Campos Nader", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Andrea Jessica Martinez Abad", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Angelica Hernandez Martinez", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Ania Itzel Mawampy Flores Rule", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Arabia Lopez Rodriguez", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Araceli Santillan Velez", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Argentina Dorantes Ramirez", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Avelino Soria Galicia", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Ayesha Lugo Moreno", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Azucena Nieto Salazar", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Badyr Ulises Rodriguez Perez", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Blanca Rosa Martinez Chavez", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Brenda Gomez Cruz", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Brenda Itzel Valle Garcia", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Candido Austria Garcia", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Gerente Regional Hidalgo"}, {"n": "Carlos Roberto Martinez Cruz", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Carolina Ramirez Velazquez", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Cesar Israel Mendoza Perez", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Christian Xavier Montaño Alba", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Ciomara Hernandez Silva", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Claudia Edith Martinez Ramirez", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Daniel Jimenez Camargo", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "David Barrera Alcocer", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Deyanira Perez Gonzalez", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Diana Osiris Garcia Paredes", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Diana Rivero Mondragon", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Dominga Sesma Alvarado", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Dulce Montserrat Vera Barajas", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Lider De Unidad De Negocio"}, {"n": "Eber Cortes Omaña", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Eddie Hi Lopez", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Eduardo Gonzalez Bobadilla", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Elizabeth Huerta Lopez", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Elizabeth Montoya Hernandez", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Elizabeth Ortiz De La Palma", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Elizabeth Sanchez Correu", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Elvira Alein Vicent Yañez", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Ericka De Jesus Serrano Mendez", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Ericka Viviana Alvares Lozada", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Erika Antunez Garcia", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Fernando Alvarado Ramirez", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Flavio Cesar Garcia Martinez", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Gabriela Lopez Herrera", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Guadalupe Montserrat Cuellar Valerio", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Guillermina Tecorral Martinez", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Gustavo Lopez Lopez", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Hector Quezada Corona", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Ilce Del Carmen Avila Navarro", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Irais Sol Ayala Hernandez", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Irene Marlen Alcantara Hernandez", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Irving Ramirez Hernandez", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Isabel Guadalupe Ovando Delgado", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Israel Salas Quijada", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Israel Sinhue Chavez Lopez", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Jaquelin Bermudez Islas", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Javier Andree Cedeño Martinez", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Jenifer Yomira Montes De Oca Baron", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Jennifer Desiree Davila Pocoroba", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Jessica Pilar Arias Cadena", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Joaquin Castañeda Saldaña", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Joasir Alberto Cruz Hernandez", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Jose Francisco Miguel Hernandez", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Jose Juan Guerrero Paz", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Jose Luis Gomez Vargas", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Jose Luis Sanchez Hernandez", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Josue Raul Rojas Valadez", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Juan Gustavo Cruz Fernandez", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Julio Cesar Lozano Mayorga", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Karla Yathed Oaxaca Melendez", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Leonardo Hernandez Peña", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Leslie Ortiz Mercado", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Lidia Berenice Cruz Calzada", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Liliana Marlen Sanchez Tapia", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Lider De Unidad De Negocio"}, {"n": "Lourdes Karina Contreras Garcia", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Luis Angel Ortiz Martinez", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Luis Oscar Pelcastre Espejel", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Marco Antonio Cordova Alonso", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Maria Guadalupe Martinez Gonzalez", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Maria Isabel Miranda Bustamante", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Mariel Guadalupe Guerra Gonzalez", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Marlene Barajas Escobar", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Martha Susana Talamantes Badillo", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Maximino Garcia Lopez", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Mayra Alejandra Hernandez Flores", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Mayra Jazmin Uribe Cortes", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Miguel Agustin Murguia Rodriguez", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Miguel Angel Gallegos Garcia", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Myrna Galicia Martinez", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Nadia Guadalupe Hernandez Rivera", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Norma Araceli Mendoza Vazquez", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Oscar Cortes Duran", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Oscar Ivan Morquecho Baltazar", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Oscar Mejia Galicia", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Paola Berenice Guzman Mosqueda", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Ramon Perez Arana", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Gerente Regional Centro"}, {"n": "Rodolfo Antonio Cruz Pelcastre", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Rosa Maria Garnica Mendoza", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Rosario Mena Zamora", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Salem Tenorio Martinez", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Samuel Ricardo Vertiz Gavito", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Sandra Patricia Rodriguez Rugerio", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Sarai Duran Sanchez", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Teresa Cordova Cortez", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Thalia Serrano Guzman", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Lider De Unidad De Negocio"}, {"n": "Vanessa Karla Urban Gutierrez", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Vanessa Lizeth Garcia Escalante", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Veronica Magdalena Rojas Enriquez", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Veronica Muñoz Tapia", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Victor Martin Rosales Bañuelos", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Violeta Alejandra Romero Moctezuma", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Virginia Alanis Suarez", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Yadira Bautista Del Angel", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Lider De Unidad De Negocio"}, {"n": "Yair Guillermo Tahuilan Arizmendi", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Yedizadet Maqueda Tecorral", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Yoav Manuel Gonzalez Gomez", "r": "CENTRO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Yunuen Clarivel Garcia Castro", "r": "CENTRO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Donovan Solano Andrade", "r": "CENTRO", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Coordinador De Marketing Hidalgo"}, {"n": "Monserrath Laguna Rojas", "r": "CENTRO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Becario"}, {"n": "Rodrigo Gonzalez Garcia", "r": "CENTRO", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Coordinador De Marketing Centro"}, {"n": "Alma Yazmin Castelan Rosas", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Coordinador De Servicios Financieros"}, {"n": "Armando Hernandez Robles", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Especialista En Titulacion"}, {"n": "Brenda Villarruel Arana", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Soluciones Financieras"}, {"n": "Deyssi Nalleli Cruz Manzo", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Servicios Financieros"}, {"n": "Gabriela Torres Romero", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Titulacion"}, {"n": "Irma Isela Islas De La Rosa", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Coordinador De Titulacion"}, {"n": "Jaime Tovar Torres", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Gerente De Soluciones Y Servicios Financieros"}, {"n": "Jorge Antonio Hernandez Hernandez", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista De Soluciones Financieras"}, {"n": "Jorge Armando Velazquez Gonzalez", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Coordinador De Titulacion"}, {"n": "Juan Carlos Rosas Velazquez", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista De Servicios Financieros"}, {"n": "Maria Jacqueline Rivera Osorio", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Servicios Financieros"}, {"n": "Mario Javier Cruz Aquino", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista De Titulacion"}, {"n": "Marlen Victoria Garcia Nava", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Coordinador De Soluciones Financieras"}, {"n": "Miriam Rojas Torres", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Titulacion"}, {"n": "Nancy Guadalupe Navarrete Torres", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Soluciones Financieras"}, {"n": "Raul Lopez Becerril", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Especialista En Titulacion"}, {"n": "Rosa Isela Sanchez Jimenez", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Soluciones Financieras"}, {"n": "Rosa Lizbeth Alvarez Hernandez", "r": "CENTRO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Coordinador Administrativo"}, {"n": "Claudia Izamar Santana Piña", "r": "CENTRO", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Gloria Fernanda Lagunas Castillo", "r": "CENTRO", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Laura Vega Jimenez", "r": "CENTRO", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Susana Benhumea Rivera", "r": "CENTRO", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Wendy Haro Tapia", "r": "CENTRO", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Ximena Hernandez Gonzalez", "r": "CENTRO", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Alma Rosario Aldama Valdez", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Mujer", "p": "Community Manager"}, {"n": "Angel Emilio Hernandez Gonzalez", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Hombre", "p": "Auxiliar De Reclutamiento Comercial"}, {"n": "Angelica Yuridia Plata Ochoa", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Mujer", "p": "Analista De Reclutamiento Comercial"}, {"n": "Axl Eduardo Cruz Mejia", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Hombre", "p": "Auxiliar De Reclutamiento Comercial"}, {"n": "Claudia Elena Velazquez Esquivel", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Mujer", "p": "Especialista En Entrenamiento De Creditos"}, {"n": "Daniela Jimena Ramirez Diaz", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Mujer", "p": "Diseñador De Materiales"}, {"n": "Diana Parra Garcia", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Mujer", "p": "Gerente Corporativo De Centro De Entrenamiento Comercial"}, {"n": "Diego Fernando Nieto Alvarez", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Hombre", "p": "Disenador Grafico"}, {"n": "Edgardo Sebastian Mojica Yañez", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Hombre", "p": "Analista De Reclutamiento Comercial"}, {"n": "Gisela Farias Olguin", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Mujer", "p": "Coordinador De Reclutamiento Comercial"}, {"n": "Hugo Hernandez Ramirez", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Hombre", "p": "Especialista En Producto"}, {"n": "Jesus Octavio Soto Jordan", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Hombre", "p": "Especialista En Entrenamiento De Herramientas Y Sistemas De Trabajo"}, {"n": "Johana Tamara Vazquez Contreras", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Mujer", "p": "Auxiliar Administrativo"}, {"n": "Josias Armando Creus Ojeda", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Hombre", "p": "Analista De Lms"}, {"n": "Karla Denisse Lopez Campos", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Mujer", "p": "Auxiliar De Reclutamiento Comercial"}, {"n": "Luis Angel Cruz Mejia", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Hombre", "p": "Especialista En Entrenamiento Digital"}, {"n": "Magali Nova Ortiz", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Mujer", "p": "Especialista En Capacitacion Y Cultura Organizacional"}, {"n": "Mario Chavez Trejo", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Hombre", "p": "Analista De Reclutamiento Comercial"}, {"n": "Martha De Martini Cortes", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Mujer", "p": "Auxiliar De Reclutamiento Comercial"}, {"n": "Tonatiuh Garza Martinez", "r": "CORPORATIVO", "a": "CENTRO DE ENTRENAMIENTO COMERCIAL", "s": "Hombre", "p": "Especialista En Reclutamiento Comercial"}, {"n": "Alejandro Revuelta Lopez", "r": "CORPORATIVO", "a": "COMERCIALIZACION", "s": "Hombre", "p": "Director Corporativo De Comercializacion"}, {"n": "Andrea Abigail Mendez Carrillo", "r": "CORPORATIVO", "a": "COMERCIALIZACION", "s": "Mujer", "p": "Analista De Presupuestos"}, {"n": "Jose Alberto Camacho Guadarrama", "r": "CORPORATIVO", "a": "COMERCIALIZACION", "s": "Hombre", "p": "Gerente Corporativo De Administracion Comercial"}, {"n": "Alma Rocio Ortega Gonzalez", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Host Telefonico"}, {"n": "Andrea Cecilia Galvan Sanchez", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Host Telefonico"}, {"n": "Andrea Rivera Cruz", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Host Telefonico"}, {"n": "Carlos Jaziel Alcantara Gonzalez", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Hombre", "p": "Host Compra Facil"}, {"n": "Cesar Alonso Garcia Morales", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Hombre", "p": "Host Telefonico"}, {"n": "Cynthia Nidia Alejandre Garcia", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Host Telefonico"}, {"n": "Diego Enrique Lozada Bejero", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Hombre", "p": "Host Telefonico"}, {"n": "Edgar Uriel Rosales Cortez", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Hombre", "p": "Host Telefonico"}, {"n": "Elohim Martinez Garcia", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Hombre", "p": "Host Telefonico"}, {"n": "Fernando Michell Martinez Cardona", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Hombre", "p": "Host Telefonico"}, {"n": "Francisco Javier Ordaz De Jesus", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Hombre", "p": "Wfm"}, {"n": "Galilea Yadira Jimenez Lopez", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Host Telefonico"}, {"n": "Jorge Arturo Lopez Gonzalez", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Hombre", "p": "Host Compra Facil"}, {"n": "Jose Alonso Carmona Sanchez", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Hombre", "p": "Host Compra Facil"}, {"n": "Juan Carlos Quiroz Ceron", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Hombre", "p": "Host Telefonico"}, {"n": "Laurent Nazareth Rosas Resendiz", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Host Telefonico"}, {"n": "Luis Angel Caballero Perez", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Hombre", "p": "Host Telefonico"}, {"n": "Luis Arturo Sanchez Mejia", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Hombre", "p": "Host Telefonico"}, {"n": "Magaly Edith Zaragoza Calderon", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Host Customer Engagement Center"}, {"n": "Maria Fernanda Baez Cortes", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Host Telefonico"}, {"n": "Maria Fernanda Torres Lopez", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Host Compra Facil"}, {"n": "Maria Isabel Maldonado Lopez", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Host Compra Facil"}, {"n": "Maribel Garcia Muñiz", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Host Telefonico"}, {"n": "Narayana Navarrete Ramirez", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Host Telefonico"}, {"n": "Nelly Arisbel Puebla Martinez", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Host Telefonico"}, {"n": "Pablo Romero Reza", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Hombre", "p": "Host Compra Facil"}, {"n": "Ricardo Hernandez Martinez", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Hombre", "p": "Gerente Corporativo De Engagement Center"}, {"n": "Rodrigo Fabian Maya", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Hombre", "p": "Host Telefonico"}, {"n": "Ruth Esther Martinez Martinez", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Host Telefonico"}, {"n": "Susana Vazquez Ortega", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Supervisor De Engagement Center"}, {"n": "Veronica Morales Bautista", "r": "CORPORATIVO", "a": "ENGAGEMENT CENTER", "s": "Mujer", "p": "Host Compra Facil"}, {"n": "Abraham Mercado Urow", "r": "CORPORATIVO", "a": "INNOVACION Y MEJORA CONTINUA", "s": "Hombre", "p": "Product Owner"}, {"n": "Alejandro Armando Espinosa Ponce", "r": "CORPORATIVO", "a": "INNOVACION Y MEJORA CONTINUA", "s": "Hombre", "p": "Process Owner"}, {"n": "Eduardo Sanchez Lopez", "r": "CORPORATIVO", "a": "INNOVACION Y MEJORA CONTINUA", "s": "Hombre", "p": "Gerente Corporativo Pmo"}, {"n": "Jaime Grezemkovsky Zilber", "r": "CORPORATIVO", "a": "INNOVACION Y MEJORA CONTINUA", "s": "Hombre", "p": "Director Corporativo De Innovacion Y Mejora Continua"}, {"n": "Jorge Prieto Rayas", "r": "CORPORATIVO", "a": "INNOVACION Y MEJORA CONTINUA", "s": "Hombre", "p": "Product Owner"}, {"n": "Leydi Diana Granados Sanchez", "r": "CORPORATIVO", "a": "INNOVACION Y MEJORA CONTINUA", "s": "Mujer", "p": "Coordinador De Innovacion Y Proyectos Comerciales"}, {"n": "Marco Antonio Jimenez Cervantes", "r": "CORPORATIVO", "a": "INNOVACION Y MEJORA CONTINUA", "s": "Hombre", "p": "Gerente Corporativo Pmo"}, {"n": "Miriam Berenice Diaz Urquidi", "r": "CORPORATIVO", "a": "INNOVACION Y MEJORA CONTINUA", "s": "Mujer", "p": "Scrum Master"}, {"n": "Richard Vargas Nengua", "r": "CORPORATIVO", "a": "INNOVACION Y MEJORA CONTINUA", "s": "Hombre", "p": "Hubspot Manager"}, {"n": "Sonia Mervi Maletz Ramirez", "r": "CORPORATIVO", "a": "INNOVACION Y MEJORA CONTINUA", "s": "Mujer", "p": "Product Owner"}, {"n": "Tania Moiño De Leon", "r": "CORPORATIVO", "a": "INNOVACION Y MEJORA CONTINUA", "s": "Mujer", "p": "Product Owner"}, {"n": "Ariel Plasencia Diaz", "r": "CORPORATIVO", "a": "INTELIGENCIA COMERCIAL", "s": "Hombre", "p": "Analista Power Bi"}, {"n": "Cristopher Eduardo Villegas Govantes", "r": "CORPORATIVO", "a": "INTELIGENCIA COMERCIAL", "s": "Hombre", "p": "Data Analyst"}, {"n": "Ivan Giovanni Valdespin Garcia", "r": "CORPORATIVO", "a": "INTELIGENCIA COMERCIAL", "s": "Hombre", "p": "Data Researcher"}, {"n": "Jonathan Lozano Villanueva", "r": "CORPORATIVO", "a": "INTELIGENCIA COMERCIAL", "s": "Hombre", "p": "Gerente Corporativo De Innovacion E Inteligencia Comercial"}, {"n": "Oscar Lopez Perea", "r": "CORPORATIVO", "a": "INTELIGENCIA COMERCIAL", "s": "Hombre", "p": "Product Owner Innovacion Comercial"}, {"n": "Raimer Salas Gonzalez", "r": "CORPORATIVO", "a": "INTELIGENCIA COMERCIAL", "s": "Hombre", "p": "Data Scientist"}, {"n": "Victor Manuel Lopez Rangel", "r": "CORPORATIVO", "a": "INTELIGENCIA COMERCIAL", "s": "Hombre", "p": "Data Analyst"}, {"n": "Alan Enrique Estrada Reyes", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Community Manager Hul"}, {"n": "Alejandra Maria Belmont Alvarez", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Coordinador Creativo"}, {"n": "Alejandro Yasir Espejel Carmona", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Coordinador Social Media"}, {"n": "Alondra Mayorga Ramirez", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Community Manager Hu"}, {"n": "Andres Moreno Sanchez", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Especialista Bots & Automation"}, {"n": "Barbara Juliana Cunha", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Especialista De Contenidos Compra Facil"}, {"n": "Diana Esther Cruz Ramirez", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Lead Conversion"}, {"n": "Diana Gabriela Serrano Lira", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Auxiliar Administrativo"}, {"n": "Erika Alejandra Sanchez Atenco", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Especialista De Contenidos"}, {"n": "Ernesto Acosta Zamora", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Coordinador De Contenidos"}, {"n": "Ezra Almanza Ramirez", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Coordinador De Diseno Grafico"}, {"n": "Fabiola Beltran Lemus", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Coordinador De Marketing Meriden"}, {"n": "Fernando Nahum Sanchez Reyes", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Diseñador Multimedia"}, {"n": "Ik Sebastian Gomez Ruiz", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Editor De Video"}, {"n": "Juan Pablo Buffa", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Gerente Corporativo De Mercadotecnia Y Publicidad"}, {"n": "Karen Aidee Pineda Piña", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Diseñador Multimedia"}, {"n": "Nayelly Rebollar Carbajal", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Digital Planner Squad Digital"}, {"n": "Rene Alejandro Martinez Mandujano", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Coordinador Paid Media"}, {"n": "Sharon Romero Zisman", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Coordinador De Marketing Central Park"}, {"n": "Silvana Ramirez Romero", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Marketing Operations Associate"}, {"n": "Tania Evia Meneses", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Especialista De Contenidos"}, {"n": "Valeria Montserrat Garcia Hernandez", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Trafficker Jr"}, {"n": "Victor Arturo Tapia Mondragon", "r": "CORPORATIVO", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Editor De Video"}, {"n": "Alexis Javier Alvarado Almaguer", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Supervisor De Bop"}, {"n": "Andres Figueroa Hernandez", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista De Servicios Financieros"}, {"n": "Brenda Lizbeth De Aquino Plata", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista Compra Facil"}, {"n": "Christopher Lozada Martinez", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista Compra Facil"}, {"n": "Dante Ivan Lopez Cariño", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista Compra Facil"}, {"n": "David Perez Martinez", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista De Servicios Financieros"}, {"n": "Eleazar Arturo Mendez Mancera", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista De Servicios Financieros"}, {"n": "Eliud Andrade Dominguez", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista Compra Facil"}, {"n": "Gabriela Sifuentes Gonzalez", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Servicios Financieros"}, {"n": "Jeny Jazaret Jaimes Cuenca", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista De Servicios Financieros"}, {"n": "Jorge Carlos Tellez Garcia", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Especialista Compra Facil"}, {"n": "Jorge Jair Rosas Belman", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista Compra Facil"}, {"n": "Jorge Luis Mejia Garcia", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Coordinador De Titulacion"}, {"n": "Josahandi Abigail Palacios Martinez", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Especialista En Administracion De Ventas"}, {"n": "Joselin Paola Walles Sotelo", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Especialista Compra Facil"}, {"n": "Josue David Nuñez Sanchez", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista De Servicios Financieros"}, {"n": "Juan Carlos Rodriguez Lomeli", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista Compra Facil"}, {"n": "Luis Alejandro Bastida Rodriguez", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista De Servicios Financieros"}, {"n": "Manuel Agustin Pallares Saldaña", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista Compra Facil"}, {"n": "Marco Antonio Valenzuela Luviano", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Coordinador De Bom"}, {"n": "Maria Antonieta Diez Fierro", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Subgerente De Bop"}, {"n": "Maria Elizabeth Vergara Moisen", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Servicios Financieros"}, {"n": "Marian Lizbeth Espejo Huerta", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Especialista Compra Facil"}, {"n": "Maricela Vargas Solano", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Servicios Financieros"}, {"n": "Mayra Macazaga Cabello", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Coordinador De Administracion De Ventas"}, {"n": "Miguel Alejandro Mendoza Servin", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista Compra Facil"}, {"n": "Nayeli Ramirez Manzo", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Especialista En Administracion De Ventas"}, {"n": "Olga Angelina Ruiz Lopez", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Especialista En Administracion De Ventas"}, {"n": "Omar Gomez Andrade", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Coordinador De Soluciones Financieras Y Titulacion"}, {"n": "Prisma Lucinda Ramos Suarez", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Especialista Compra Facil"}, {"n": "Ricardo Anguiano Miranda", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Especialista Compra Facil"}, {"n": "Ricardo Diaz Cedillo", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Especialista Compra Facil"}, {"n": "Roberto Carlos Orizaba Camacho", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista Compra Facil"}, {"n": "Ruben Enrique Enriquez Pavia", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Gerente Corporativo De Operaciones Y Servicios De Titulacion"}, {"n": "Samuel Eduardo Mejia Gonzalez", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Especialista Compra Facil"}, {"n": "Susana Gonzalez Reyes", "r": "CORPORATIVO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Servicios Financieros"}, {"n": "Alberto Braulio Vite", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Product Genius"}, {"n": "Alejandra Torres Hernandez", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Amada Jasmin Garcia Armijos", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Ana Luisa Chacon De La Colina", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Product Genius"}, {"n": "Andrea Rivera Gomez", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Product Genius"}, {"n": "Anell Medrano Garcia", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Anilu Alejos Hernandez", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Ariana Martinez Marquez", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Beatriz Adriana Piedras Vazquez", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Berenice Yasmin Roa Lopez", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Caeli Rubi Acuña Mejia", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Claudia Jacqueline Fernandez Arroyo", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Claudia Margarita Guzman Hernandez", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Cristian Ricardo Hernandez Aguilera", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Gerente Regional Cosmopol"}, {"n": "Daniela Lilian Gutierrez Cervantes", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "David Vela Ramirez", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Diana Judith Munguia Alvarez", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Diana Laura Ortiz Mendiola", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Eduardo Rojas Reyes", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Elizabeth Castro Ramos", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Erandeni Naxeli Rojas Juarez", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Erik Arredondo Olivares", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Erika Guadarrama Ramirez", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Fernanda Ixchel Villa Lemus", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Fernando Maldonado Ayala", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Fernando Meza Tapia", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Francisco Abraham Santiago Estrada", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Gabriela Esperanza Lopez Salazar", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Gerardo Adrian Espinosa Villanueva", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Grisel Montserrat Muñiz Torres", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Huberto Anastacio Fuentes Quiroz", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Isaac Cohen Saadia", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Ivan Eduardo Diaz Escobar", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Ivonne Alejandra Mejia Torres", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Janett Rosario Cortes Gonzalez", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Jorge Josedec Romero Guillen", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Jose Eduardo Castillo Davila", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Product Genius"}, {"n": "Jose Rodriguez Gregorio", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Juan Bernardo Garcia Salazar", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Juan Manuel Valadez Santillan", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Karen Maricruz Peralta Mendoza", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Leonardo Argumosa Reza", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Leonardo Perez Colin", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Product Genius"}, {"n": "Lizbeth Gallardo Santana", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Lizeth Aranza Lopez Mendoza", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Lider De Unidad De Negocio"}, {"n": "Luz Mariana De Los Reyes Millan Villegas", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Product Genius"}, {"n": "Maria De Los Angeles Gutierrez Soto", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Lider De Unidad De Negocio"}, {"n": "Marianela Valdez Marquez", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Maribel Lopez Caballero", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Marilu Jimenez Hernandez", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Marisol Rocha Flores", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Melina Alicia Alfaro Gress", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Miguel Angel Caso Luengo Baeza", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Miguel Angel Martinez Bautista", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Monica Isabel Martinez Torres", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Nancy Fabiola Ramirez Hernandez", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Olga Patricia Tiburcio Reyes", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Olivia Castro Lucena", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Oscar Alvaro Escobar Martinez", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Oscar Daniel Hernandez Tapia", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Paola Ochoa Vallejo", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Lider De Unidad De Negocio"}, {"n": "Ricardo Laguna Loperena", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Rocio Marleth Garcia Rodriguez", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Rodrigo Cruz Cruz", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Lider De Unidad De Negocio"}, {"n": "Roma Elizabeth Salinas Olvera", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Rosa Isela Rosales Herrera", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Saamantha Berenice Mejia Cervantes", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Stephany Gamez Castro", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Valeria Flores Zarate", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Vianey Lopez Lopez", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Victor Manuel Garcia Cruz", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Xavier Eduardo Vega Covarrubias", "r": "LIFESTYLE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Diana Berenisse Aceves Aguilar", "r": "LIFESTYLE", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Diseñador Multimedia"}, {"n": "Victor Erick Goytia Licona", "r": "LIFESTYLE", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Disenador Grafico Jr"}, {"n": "Victor Manuel Gonzalez Cano", "r": "LIFESTYLE", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Coordinador De Marketing Calimaya"}, {"n": "Abel Rios Chapital", "r": "LIFESTYLE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista De Titulacion"}, {"n": "Alfonso Michel Tellez Solares", "r": "LIFESTYLE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista De Soluciones Financieras"}, {"n": "Brenda Lizeth Gomez Tarango", "r": "LIFESTYLE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Titulacion"}, {"n": "Daniel Rangel Garduño", "r": "LIFESTYLE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Coordinador De Servicios Financieros"}, {"n": "Hector Manuel Buenaventura Ramirez", "r": "LIFESTYLE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Coordinador De Soluciones Financieras"}, {"n": "Hugo Enrique Garcia Vazquez", "r": "LIFESTYLE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Coordinador De Soluciones Financieras"}, {"n": "Irma Cristina Guadalupe Martin Del Campo Paz", "r": "LIFESTYLE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Servicios Financieros"}, {"n": "Jessica Linette Gomez Ortiz", "r": "LIFESTYLE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Soluciones Financieras"}, {"n": "Leobardo Armando Mendoza Lopez", "r": "LIFESTYLE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista De Soluciones Financieras"}, {"n": "Maribel Vargas Ramirez", "r": "LIFESTYLE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Gerente De Soluciones Y Servicios Financieros"}, {"n": "Mario Rafael Anzaldo Vargas", "r": "LIFESTYLE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista De Titulacion"}, {"n": "Nohemi Montserrat Soto Elizondo", "r": "LIFESTYLE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Titulacion"}, {"n": "Paola Laguna Ulloa", "r": "LIFESTYLE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Auxiliar Administrativo"}, {"n": "Viridiana Belen Granados Lopez", "r": "LIFESTYLE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Coordinador De Titulacion"}, {"n": "Ximena Aguilar Garcia", "r": "LIFESTYLE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Titulacion"}, {"n": "Jose Metta Zaga", "r": "LIFESTYLE", "a": "VENTAS", "s": "Hombre", "p": "Director Regional Cosmopol"}, {"n": "Mayra Graciela Romero Parra", "r": "LIFESTYLE", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Paulina Lopez Gonzalez", "r": "LIFESTYLE", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Tania Lizbeth Garcia Vergara", "r": "LIFESTYLE", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Arantza Jaqueline Hernandez Molina", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Arlette Karina Medina De La Riva", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Brandon Figueroa Nava", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Bryan Ortiz Pedroza", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Carla Patricia Escayola Cornelio", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Lider De Unidad De Negocio"}, {"n": "Cynthia Arteaga Rodriguez", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "David Xala Baez", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Diego Alejandro Martinez Vazquez", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Donaji Camargo Peña", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Efren Tadeo Flores Diaz", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Emilio Ramirez Serrano Torres", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Erika Mayola Romero Alpizar", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Gabriela Caballero Garcia", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Gerardo Moyado Ortega", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Ilse Gonzalez Ortiz", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Irving Uriel Urrutia Anzures", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Itzel Abigail Ibarra Castillo", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Product Genius"}, {"n": "Itzel Leon Lopez", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Iveth Villalobos Brito", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Ivonne De Martino Leal", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Jarel Salazar Barrera", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Javier Arroyo Vargas", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Gerente Regional Morelos"}, {"n": "Javier Teodoro Reza Rodriguez", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Jazmin Tellez Farina", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Jessica Yovana Zarza Saucedo", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Jhoana Jahmai Lopez Saldaña", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Jonathan Israel Tejeda Delgado", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Jose Antonio Velazquez Guzman", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Karieth Vilchis Gonzalez", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Karina Anabel Valdez Ortiz", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Luis Flores Lopez", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Margarita Manjarrez Durand", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Maria Del Pilar Gomez Romo", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Maria Fernanda Negrete Retiguin", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Marlon Anibal Vergara Jimenez", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Miriam Lizette Contreras Torres", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Nayeli Selene Garcia Corral", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Paola Samaniego Dominguez", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Product Genius"}, {"n": "Roman Jimenez Dominguez", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Rosa Maria De Jesus Mauricio", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Sergio Azghar Peña Accem", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Silvia Fernandez Peralta", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Timoteo Gonzalez Nava", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Veronica Porras Bonilla", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Victor Alejandro Herrera De La Torre", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Virginia Mazon Ramirez", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Yulideth Hernandez Castillo", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Zenyazeth Ivonne Martinez Ruiz", "r": "MORELOS-PUEBLA", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Anali Esquivel Hernandez", "r": "MORELOS-PUEBLA", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Coordinador De Marketing Morelos-puebla"}, {"n": "Blanca Virginia Briones Calderon", "r": "MORELOS-PUEBLA", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Titulacion"}, {"n": "Brenda Rios Arguelles", "r": "MORELOS-PUEBLA", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Soluciones Financieras"}, {"n": "Elaine Martinez Gomez", "r": "MORELOS-PUEBLA", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Titulacion"}, {"n": "Gabriela Coronado Arroyo", "r": "MORELOS-PUEBLA", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Titulacion"}, {"n": "Jhovana Yulissa Riquelme Sandoval", "r": "MORELOS-PUEBLA", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Coordinador De Soluciones Financieras"}, {"n": "Luz Elena Marisol Bartolo Juarez", "r": "MORELOS-PUEBLA", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Servicios Financieros"}, {"n": "Mariana Hernandez Chalte", "r": "MORELOS-PUEBLA", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Coordinador De Titulacion"}, {"n": "Norma Lagunas Alarcon", "r": "MORELOS-PUEBLA", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Servicios Financieros"}, {"n": "Rosa Guadalupe Guillen Bernal", "r": "MORELOS-PUEBLA", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Coordinador De Soluciones Financieras"}, {"n": "Rosa Isela Barrera Maldonado", "r": "MORELOS-PUEBLA", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Servicios Financieros"}, {"n": "Ruben Yair Nuñez Garcia", "r": "MORELOS-PUEBLA", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista De Soluciones Financieras"}, {"n": "Silvia Gabriela Reyes Hernandez", "r": "MORELOS-PUEBLA", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Soluciones Financieras"}, {"n": "Dafne Itzel Vega Ponce", "r": "MORELOS-PUEBLA", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Linda Leysi Alonso Garcia", "r": "MORELOS-PUEBLA", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Monica Ordoñez Leon", "r": "MORELOS-PUEBLA", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Silvana Carlota Hernandez Tolentino", "r": "MORELOS-PUEBLA", "a": "VENTAS", "s": "Mujer", "p": "Auxiliar De Mercadotecnia"}, {"n": "Adrian Ponce Moreno", "r": "QUERETARO", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Aldo Andreus Heredia Babb", "r": "QUERETARO", "a": "COMERCIAL", "s": "Hombre", "p": "Product Genius"}, {"n": "Alejandro Cancino Herrera", "r": "QUERETARO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Areli Arteaga Hernandez", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Dafne Ivana Luna Lopez", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Diego Morales Sanchez", "r": "QUERETARO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Estela Ramos Monter", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Product Genius"}, {"n": "Evelyn De Santiago Morales", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Francisco Ivan Salinas Perez", "r": "QUERETARO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Gabriela Rossano Sanchez", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Gustavo Adolfo Vazquez Tostado", "r": "QUERETARO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Hugo Rivas Armenta", "r": "QUERETARO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Jose Apolinar Beltran Gonzalez", "r": "QUERETARO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Jose De Jesus Perez Salazar", "r": "QUERETARO", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio Sr"}, {"n": "Jose Guadalupe Enciso Sanchez", "r": "QUERETARO", "a": "COMERCIAL", "s": "Hombre", "p": "Product Genius"}, {"n": "Karely Guadalupe Moreno Norzagaray", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Liliana Judith Valencia Herrera", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Luis Alberto Navarrete Gutierrez", "r": "QUERETARO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Magda Guadalupe Aguirre Quintana", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Maria Del Rocio Huerta Gonzalez", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Mariana Lee Gomez", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Marlene Cermeño Lopez", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Misael Alejandro Sandoval Juarez", "r": "QUERETARO", "a": "COMERCIAL", "s": "Hombre", "p": "Lider De Unidad De Negocio"}, {"n": "Nallely Del Carmen Urrutia Gutierrez", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Natalia Valdivia Atienza", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Product Genius"}, {"n": "Nidra Thayry Romero Padrino", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Paulina Moreno Guzman", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Perla Gabriela Suarez Salvador", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Refugio Alcocer Dorado", "r": "QUERETARO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Sergio Guerrero Covarrubias", "r": "QUERETARO", "a": "COMERCIAL", "s": "Hombre", "p": "Gerente Regional Queretaro"}, {"n": "Victoria Montcerrath Gonzalez Lopez", "r": "QUERETARO", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Yenia Alejandra Ventura Ochoa", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Zurisadai Mercado Galindo", "r": "QUERETARO", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Karen Abigail Hernandez Fuentes", "r": "QUERETARO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Auxiliar De Mercadotecnia"}, {"n": "Lizbet Fernanda Mendoza Del Razo", "r": "QUERETARO", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Coordinador De Marketing Queretaro"}, {"n": "Alinne Izaskum Hernandez Moreno", "r": "QUERETARO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Coordinador De Servicios Financieros"}, {"n": "David Villanueva Reynoso", "r": "QUERETARO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Gerente De Soluciones Y Servicios Financieros"}, {"n": "Emilia Andrea Marquez Almea", "r": "QUERETARO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Coordinador De Titulacion"}, {"n": "Fernanda Elisarraraz Garcia", "r": "QUERETARO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Servicios Financieros"}, {"n": "Lidia Graciela Sauceda Martinez", "r": "QUERETARO", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Especialista En Titulacion"}, {"n": "Clementina Salinas Ruiz", "r": "QUERETARO", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Karla Regina Alvarez Bueno", "r": "QUERETARO", "a": "VENTAS", "s": "Mujer", "p": "Becario"}, {"n": "Ana Paula Reyes Garcia", "r": "RESIDENCIAL", "a": "COMERCIAL", "s": "Mujer", "p": "Gerente Business Manager Bosque Real"}, {"n": "Edgar Daniel Angarita Quintana", "r": "RESIDENCIAL", "a": "COMERCIAL", "s": "Hombre", "p": "Gerente Business Manager Meriden"}, {"n": "Maria Fernanda Ventura Ruiz", "r": "RESIDENCIAL", "a": "COMERCIAL", "s": "Mujer", "p": "Gerente Business Manager Legacy"}, {"n": "Alejandra Del Carmen Estrella Farfan", "r": "RESIDENCIAL", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Coordinador De Marketing Meriden"}, {"n": "Aranza Eugenia Marrufo Victoria", "r": "RESIDENCIAL", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Especialista En Contenidos Gim Ls"}, {"n": "Emilio Gil Rodriguez", "r": "RESIDENCIAL", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Head Of Brand & Cx"}, {"n": "Elizabeth Villa Lopez", "r": "RESIDENCIAL", "a": "VENTAS", "s": "Mujer", "p": "Asesor Residencial"}, {"n": "Fibi Gabriela Romero Valdez", "r": "RESIDENCIAL", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Jackelinne Buzali Bazbaz", "r": "RESIDENCIAL", "a": "VENTAS", "s": "Mujer", "p": "Asesor Residencial"}, {"n": "Karena Alejandra Acevedo Arjona", "r": "RESIDENCIAL", "a": "VENTAS", "s": "Mujer", "p": "Asesor Residencial"}, {"n": "Monica Ivette Fernandez Ascension", "r": "RESIDENCIAL", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Nadia Irais Zapata Palomo", "r": "RESIDENCIAL", "a": "VENTAS", "s": "Mujer", "p": "Especialista En Administracion De Ventas"}, {"n": "Raquel Edith Lañin", "r": "RESIDENCIAL", "a": "VENTAS", "s": "Mujer", "p": "Asesor Residencial"}, {"n": "Sandra Mercado Colin", "r": "RESIDENCIAL", "a": "VENTAS", "s": "Mujer", "p": "Analista Administrativo"}, {"n": "Sharon Daniela Zuñiga Varela", "r": "RESIDENCIAL", "a": "VENTAS", "s": "Mujer", "p": "Asesor Residencial"}, {"n": "Alan Emiliano Altuzar Gonzalez", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Alejandro De Jesus Jimenez Orozco", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Alma Delia Hernandez Meza", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Axel Matias Aguirre Do Pazo", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Berenice Lopez Hermosillo", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Betzabe Aguilar Alvarez", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Brenda Giaremmi Rodriguez Rios", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Bryan Adam Rosales Quintana", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Carlos Francisco De La O Fierro", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Carlos Suarez Garza", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Gerente Regional Quintana Roo"}, {"n": "Cesar Augusto Pacheco Silva", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Cesar German Jimenez Rosario", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Claudia America Lopez Gonzalez", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Daniel Aaron Vidal Gudiño", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Elisa Avila Torres", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Elsa Carolina Gordon Carrizales", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Lider De Unidad De Negocio"}, {"n": "Emmanuel Cardona Gutierrez", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Estrella Yesenia San Pedro Perez", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Gerardo Josue Diaz Chimil", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Gerardo Raul Olascoaga Alejandri", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Guillermo Ismael Avila Delgado", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Hercila Amalia Barragan Vera", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Ines Madrigal Gonzalez", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Irving Jair Herrera Carbajal", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Jaqueline Tapia Gutierrrez", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Lider De Unidad De Negocio"}, {"n": "Joel Anselmo Cano Hoil", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Jordana Monserrat Maya Lopez", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Lider De Unidad De Negocio"}, {"n": "Jorge Alejandro Baldamis Garcia", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Jose Noe Lugo Morales", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Juan Carlos Hernandez Anguiano", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Julian Andres Montoya Caicedo", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Karla Patricia Perez Rosario", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Leonardo Isai Olascoaga Moreno", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Leopoldo Joaquin Be Mena", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Lesliee Silvia Garcia Garcia", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Lesly Fernanda Olvera Felix", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Lesly Patricia Benitez Rosas", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Lizbeth Plata Fraga", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Luz Del Carmen Valencia Uribe", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Mara Rios Leal", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Margarita Delfina Godinez De Leon", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Maria Asuncion Hu Canche", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Maria Beatriz Uc Castro", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Maria Elena Rodriguez Reyes", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Maria Veronica Garcia Rangel", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Marisol Ramirez Suarez", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Melisa Jenifer Rios Rodriguez", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Mikhael Alexander Gomez Tellez", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Miriam Ferman Agustin", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Nelly Hernandez Pedraza", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Olga Marleni Herrera Chable", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Olivia Del Socorro Guzman Hernandez", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Lider De Unidad De Negocio"}, {"n": "Omar Daniel Garcia Rodriguez", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Oscar Zavala Gonzalez", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Paola Carolina Bobadilla Gonzalez", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Patricia Adyade Aguiñaga Cardenas", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Product Genius"}, {"n": "Perla Aglae Garcia Manzano", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Lider De Unidad De Negocio"}, {"n": "Rodolfo Erick Gaspar Olascuaga", "r": "SURESTE", "a": "COMERCIAL", "s": "Hombre", "p": "Facilitador De Compra"}, {"n": "Stefany Naomi Vera Cetina", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Tamara Darahi Caamal Geronimo", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Tomasita Rosina Uh Alvarado", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Xiomara Natali Aguirre Bañol", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Yuridiana Vega Cortez", "r": "SURESTE", "a": "COMERCIAL", "s": "Mujer", "p": "Facilitador De Compra"}, {"n": "Diana Castañeda Casillas", "r": "SURESTE", "a": "MERCADOTECNIA", "s": "Mujer", "p": "Coordinador De Marketing Playa Del Carmen"}, {"n": "Jose Eduardo Lopez Sanchez", "r": "SURESTE", "a": "MERCADOTECNIA", "s": "Hombre", "p": "Coordinador De Mercadotecnia"}, {"n": "Brain Elizabeth Florencio Puentes", "r": "SURESTE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Auxiliar Administrativo"}, {"n": "Carlos Pablo Perez Cob", "r": "SURESTE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Especialista En Titulacion"}, {"n": "Dalia Odelinda Mendoza Ambrosio", "r": "SURESTE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Coordinador De Servicios Financieros"}, {"n": "Dulce Maria Jimenez Ek", "r": "SURESTE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Servicios Financieros"}, {"n": "Federico Antonio Mata Hernandez", "r": "SURESTE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Gerente De Soluciones Y Servicios Financieros"}, {"n": "Guadalupe Elizabeth Montero Rodriguez", "r": "SURESTE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Analista De Servicios Financieros"}, {"n": "Jared Vivar Meza", "r": "SURESTE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Coordinador De Titulacion"}, {"n": "Luis Felipe Pineda Estrella", "r": "SURESTE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Especialista En Titulacion"}, {"n": "Luis Manuel Cruz Tercero", "r": "SURESTE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Analista De Soluciones Financieras"}, {"n": "Maria Del Carmen Tziu Martinez", "r": "SURESTE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Especialista En Titulacion"}, {"n": "Maria Guadalupe Galaz Cetina", "r": "SURESTE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Coordinador De Titulacion"}, {"n": "Olga Lidia Alayola Ortiz", "r": "SURESTE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Mujer", "p": "Especialista En Cobranza Institucional"}, {"n": "Sergio Alexander Cruz De La Cruz", "r": "SURESTE", "a": "SOLUCIONES Y SERVICIOS FINANCIEROS", "s": "Hombre", "p": "Especialista En Titulacion"}, {"n": "Cristal Rodriguez Barrios", "r": "SURESTE", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}, {"n": "Jose Luis Camacho Lizarraga", "r": "SURESTE", "a": "VENTAS", "s": "Hombre", "p": "Director Regional Sureste"}, {"n": "Olga Maria Oxte May", "r": "SURESTE", "a": "VENTAS", "s": "Mujer", "p": "Recepcionista"}], "regions": [{"region": "BDI", "areas": [{"area": "COMERCIAL", "Hombre": 1, "Mujer": 0, "Total": 1}], "tot": {"Hombre": 1, "Mujer": 0, "Total": 1}}, {"region": "CENTRO", "areas": [{"area": "COMERCIAL", "Hombre": 47, "Mujer": 76, "Total": 123}, {"area": "MERCADOTECNIA", "Hombre": 2, "Mujer": 1, "Total": 3}, {"area": "SOLUCIONES Y SERVICIOS FINANCIEROS", "Hombre": 7, "Mujer": 11, "Total": 18}, {"area": "VENTAS", "Hombre": 0, "Mujer": 6, "Total": 6}], "tot": {"Hombre": 56, "Mujer": 94, "Total": 150}}, {"region": "CORPORATIVO", "areas": [{"area": "CENTRO DE ENTRENAMIENTO COMERCIAL", "Hombre": 10, "Mujer": 10, "Total": 20}, {"area": "COMERCIALIZACION", "Hombre": 2, "Mujer": 1, "Total": 3}, {"area": "ENGAGEMENT CENTER", "Hombre": 15, "Mujer": 16, "Total": 31}, {"area": "INNOVACION Y MEJORA CONTINUA", "Hombre": 7, "Mujer": 4, "Total": 11}, {"area": "INTELIGENCIA COMERCIAL", "Hombre": 7, "Mujer": 0, "Total": 7}, {"area": "MERCADOTECNIA", "Hombre": 10, "Mujer": 13, "Total": 23}, {"area": "SOLUCIONES Y SERVICIOS FINANCIEROS", "Hombre": 20, "Mujer": 16, "Total": 36}], "tot": {"Hombre": 71, "Mujer": 60, "Total": 131}}, {"region": "LIFESTYLE", "areas": [{"area": "COMERCIAL", "Hombre": 26, "Mujer": 46, "Total": 72}, {"area": "MERCADOTECNIA", "Hombre": 2, "Mujer": 1, "Total": 3}, {"area": "SOLUCIONES Y SERVICIOS FINANCIEROS", "Hombre": 7, "Mujer": 8, "Total": 15}, {"area": "VENTAS", "Hombre": 1, "Mujer": 3, "Total": 4}], "tot": {"Hombre": 36, "Mujer": 58, "Total": 94}}, {"region": "MORELOS-PUEBLA", "areas": [{"area": "COMERCIAL", "Hombre": 18, "Mujer": 30, "Total": 48}, {"area": "MERCADOTECNIA", "Hombre": 0, "Mujer": 1, "Total": 1}, {"area": "SOLUCIONES Y SERVICIOS FINANCIEROS", "Hombre": 2, "Mujer": 10, "Total": 12}, {"area": "VENTAS", "Hombre": 0, "Mujer": 4, "Total": 4}], "tot": {"Hombre": 20, "Mujer": 45, "Total": 65}}, {"region": "QUERETARO", "areas": [{"area": "COMERCIAL", "Hombre": 15, "Mujer": 18, "Total": 33}, {"area": "MERCADOTECNIA", "Hombre": 0, "Mujer": 2, "Total": 2}, {"area": "SOLUCIONES Y SERVICIOS FINANCIEROS", "Hombre": 1, "Mujer": 4, "Total": 5}, {"area": "VENTAS", "Hombre": 0, "Mujer": 2, "Total": 2}], "tot": {"Hombre": 16, "Mujer": 26, "Total": 42}}, {"region": "RESIDENCIAL", "areas": [{"area": "COMERCIAL", "Hombre": 1, "Mujer": 2, "Total": 3}, {"area": "MERCADOTECNIA", "Hombre": 1, "Mujer": 2, "Total": 3}, {"area": "VENTAS", "Hombre": 0, "Mujer": 9, "Total": 9}], "tot": {"Hombre": 2, "Mujer": 13, "Total": 15}}, {"region": "SURESTE", "areas": [{"area": "COMERCIAL", "Hombre": 24, "Mujer": 39, "Total": 63}, {"area": "MERCADOTECNIA", "Hombre": 1, "Mujer": 1, "Total": 2}, {"area": "SOLUCIONES Y SERVICIOS FINANCIEROS", "Hombre": 5, "Mujer": 8, "Total": 13}, {"area": "VENTAS", "Hombre": 1, "Mujer": 2, "Total": 3}], "tot": {"Hombre": 31, "Mujer": 50, "Total": 81}}], "grand": {"Hombre": 233, "Mujer": 346, "Total": 579}, "sizes": ["CH", "M", "G", "XL", "XXL"], "regionList": ["BDI", "CENTRO", "CORPORATIVO", "LIFESTYLE", "MORELOS-PUEBLA", "QUERETARO", "RESIDENCIAL", "SURESTE"], "areasByRegion": {"BDI": ["COMERCIAL"], "CENTRO": ["COMERCIAL", "MERCADOTECNIA", "SOLUCIONES Y SERVICIOS FINANCIEROS", "VENTAS"], "CORPORATIVO": ["CENTRO DE ENTRENAMIENTO COMERCIAL", "COMERCIALIZACION", "ENGAGEMENT CENTER", "INNOVACION Y MEJORA CONTINUA", "INTELIGENCIA COMERCIAL", "MERCADOTECNIA", "SOLUCIONES Y SERVICIOS FINANCIEROS"], "LIFESTYLE": ["COMERCIAL", "MERCADOTECNIA", "SOLUCIONES Y SERVICIOS FINANCIEROS", "VENTAS"], "MORELOS-PUEBLA": ["COMERCIAL", "MERCADOTECNIA", "SOLUCIONES Y SERVICIOS FINANCIEROS", "VENTAS"], "QUERETARO": ["COMERCIAL", "MERCADOTECNIA", "SOLUCIONES Y SERVICIOS FINANCIEROS", "VENTAS"], "RESIDENCIAL": ["COMERCIAL", "MERCADOTECNIA", "VENTAS"], "SURESTE": ["COMERCIAL", "MERCADOTECNIA", "SOLUCIONES Y SERVICIOS FINANCIEROS", "VENTAS"]}, "allAreas": ["CENTRO DE ENTRENAMIENTO COMERCIAL", "COMERCIAL", "COMERCIALIZACION", "ENGAGEMENT CENTER", "INNOVACION Y MEJORA CONTINUA", "INTELIGENCIA COMERCIAL", "MERCADOTECNIA", "SOLUCIONES Y SERVICIOS FINANCIEROS", "VENTAS"]};
+const SIZES = DATA.sizes;
+const SEXES = ["Mujer","Hombre"];
+// ==========================================================
+//  CONFIGURACIÓN — llena estos 3 valores antes de publicar
+// ==========================================================
+const SUPABASE_URL      = "https://usewhxkorrtplkbwbuxf.supabase.co";       // ej. https://xxxxx.supabase.co
+const SUPABASE_ANON_KEY = "sb_publishable_IKeiigfpphEdtQooHx59kA_nyWP6eMb";  // llave "Publishable" (sb_publishable_...) o "anon public"
+const ACCESS_CODE       = "HU2026";                // contraseña de acceso (cámbiala)
+// ==========================================================
+
+const PEOPLE = DATA.people.map((p,i)=>({...p,id:"p"+i}));
+let sizeState = {};       // id -> "CH" | ...
+let sb = null;            // cliente de Supabase
+let dbOK = false;         // ¿conectado a la base?
+
+// ---------- Supabase ----------
+function initSupabase(){
+  if(!window.supabase || SUPABASE_URL.startsWith("TU_") || SUPABASE_ANON_KEY.startsWith("TU_")){
+    dbOK=false; return false;
+  }
+  try{
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    dbOK=true; return true;
+  }catch(e){ dbOK=false; return false; }
+}
+
+// carga inicial de toda la base
+async function loadState(){
+  sizeState = {};
+  if(!dbOK) return;
+  try{
+    const {data,error} = await sb.from('tallas').select('person_id,size');
+    if(error) throw error;
+    (data||[]).forEach(r=>{ if(r.size) sizeState[r.person_id]=r.size; });
+  }catch(e){ setSaveState("error"); }
+}
+
+// escribe UNA persona (upsert) o la borra — no pisa a los demás
+async function persistOne(id,size){
+  if(!dbOK){ setSaveState("local"); return; }
+  setSaveState("saving");
+  try{
+    if(size){
+      const {error}=await sb.from('tallas').upsert({person_id:id,size:size,updated_at:new Date().toISOString()});
+      if(error) throw error;
+    }else{
+      const {error}=await sb.from('tallas').delete().eq('person_id',id);
+      if(error) throw error;
+    }
+    setSaveState("saved");
+  }catch(e){ setSaveState("error"); }
+}
+
+// relee todo desde la base y refresca la vista (botón Actualizar)
+async function syncFromRemote(){
+  const old={...sizeState};
+  await loadState();
+  applyStateToDOM(old, sizeState);
+  refreshCountsAndResumen();
+}
+
+// suscripción en tiempo real: refleja cambios de otros al instante
+function subscribeRealtime(){
+  if(!dbOK) return;
+  sb.channel('tallas-live')
+    .on('postgres_changes',{event:'*',schema:'public',table:'tallas'},payload=>{
+      const row = payload.new && payload.new.person_id ? payload.new : payload.old;
+      if(!row || !row.person_id) return;
+      const id=row.person_id;
+      const newSize = (payload.eventType==='DELETE') ? "" : (payload.new.size||"");
+      const old={[id]:sizeState[id]||""};
+      if(newSize) sizeState[id]=newSize; else delete sizeState[id];
+      applyStateToDOM(old,{[id]:newSize});
+      refreshCountsAndResumen();
+    })
+    .subscribe();
+}
+
+// aplica al DOM solo las filas cuyo valor cambió
+function applyStateToDOM(oldS, newS){
+  const ids=new Set([...Object.keys(oldS),...Object.keys(newS)]);
+  ids.forEach(id=>{
+    if((oldS[id]||"")===(newS[id]||"")) return;
+    const row=document.querySelector('#plist .prow[data-id="'+id+'"]');
+    if(!row) return;
+    const size=newS[id]||"";
+    row.querySelectorAll(".seg button").forEach(b=>b.classList.toggle("sel",b.dataset.size===size));
+    row.querySelector(".clr").hidden=!size;
+    row.classList.toggle("done",!!size);
+    row.dataset.done=size?"1":"0";
+  });
+}
+function refreshCountsAndResumen(){
+  const stat=document.getElementById("f-status").value;
+  if(stat!=="all") applyFilters(); else updateCounter();
+  recalcResumen();
+}
+
+function setSaveState(s){
+  const d=document.getElementById("save-dot"),t=document.getElementById("save-txt");
+  d.classList.remove("saving");
+  if(s==="saving"){d.classList.add("saving");t.textContent="Guardando…";}
+  else if(s==="error"){d.classList.add("saving");t.textContent="Error de conexión";}
+  else if(s==="local"){d.classList.add("saving");t.textContent="Sin base (solo local)";}
+  else{t.textContent="Guardado · en Supabase";}
+}
+
+// ---------- header ----------
+function fillSummary(){
+  c("c-total",DATA.grand.Total);c("c-h",DATA.grand.Hombre);c("c-m",DATA.grand.Mujer);c("c-reg",DATA.regions.length);
+  c("g-h",DATA.grand.Hombre);c("g-m",DATA.grand.Mujer);c("g-t",DATA.grand.Total);
+  function c(id,v){document.getElementById(id).textContent=v;}
+}
+
+// ---------- vista conteo ----------
+function renderConteo(){
+  const cont=document.getElementById("regions");cont.innerHTML="";
+  DATA.regions.forEach((R,ri)=>{
+    const div=document.createElement("div");
+    div.className="region"+(ri===0?" open":"");
+    div.dataset.region=R.region.toLowerCase();
+    div.dataset.areas=R.areas.map(a=>a.area.toLowerCase()).join(" ");
+    const rows=R.areas.map(a=>`<tr><td>${a.area}</td><td class="num">${a.Hombre}</td><td class="num">${a.Mujer}</td><td class="num">${a.Total}</td></tr>`).join("");
+    div.innerHTML=`
+      <div class="region-head">
+        <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 18 6-6-6-6"/></svg>
+        <span class="name">${R.region}</span>
+        <div class="mini">
+          <div class="cell"><span class="lbl">H</span><span class="val h num">${R.tot.Hombre}</span></div>
+          <div class="cell"><span class="lbl">M</span><span class="val m num">${R.tot.Mujer}</span></div>
+          <div class="cell"><span class="lbl">Total</span><span class="val num">${R.tot.Total}</span></div>
+        </div>
+      </div>
+      <div class="region-body">
+        <table class="conteo-t">
+          <thead><tr><th>Área / Departamento</th><th>Hombres</th><th>Mujeres</th><th>Total</th></tr></thead>
+          <tbody>${rows}</tbody>
+          <tfoot><tr><td>Total ${R.region}</td><td class="num">${R.tot.Hombre}</td><td class="num">${R.tot.Mujer}</td><td class="num">${R.tot.Total}</td></tr></tfoot>
+        </table>
+      </div>`;
+    div.querySelector(".region-head").addEventListener("click",()=>div.classList.toggle("open"));
+    cont.appendChild(div);
+  });
+}
+function applySearchConteo(q){
+  q=q.trim().toLowerCase();
+  document.querySelectorAll(".region").forEach(d=>{
+    const hit=!q||d.dataset.region.includes(q)||d.dataset.areas.includes(q);
+    d.style.display=hit?"":"none";
+    if(q&&hit)d.classList.add("open");
+  });
+}
+
+// ---------- filtros de tallas ----------
+function fillFilters(){
+  const fr=document.getElementById("f-region");
+  fr.innerHTML='<option value="">Todas las regiones</option>'+DATA.regionList.map(r=>`<option value="${r}">${r}</option>`).join("");
+  populateAreas("");
+}
+function populateAreas(region){
+  const fa=document.getElementById("f-area");
+  const list = region && DATA.areasByRegion[region] ? DATA.areasByRegion[region] : DATA.allAreas;
+  fa.innerHTML='<option value="">Todos los departamentos</option>'+list.map(a=>`<option value="${a}">${a}</option>`).join("");
+}
+
+// ---------- render personas ----------
+function renderPeople(){
+  const cont=document.getElementById("plist");
+  cont.innerHTML="";
+  const frag=document.createDocumentFragment();
+  PEOPLE.forEach(p=>{
+    const sel=sizeState[p.id]||"";
+    const row=document.createElement("div");
+    row.className="prow"+(sel?" done":"");
+    row.dataset.id=p.id;
+    row.dataset.region=p.r.toLowerCase();
+    row.dataset.area=p.a.toLowerCase();
+    row.dataset.name=p.n.toLowerCase();
+    row.dataset.done=sel?"1":"0";
+    const bcls=p.s==="Hombre"?"h":p.s==="Mujer"?"m":"o";
+    const blab=p.s==="Hombre"?"H":p.s==="Mujer"?"M":"—";
+    const segBtns=SIZES.map(s=>`<button data-size="${s}" class="${sel===s?"sel":""}">${s}</button>`).join("");
+    row.innerHTML=`
+      <div class="pinfo">
+        <div class="pname"><span class="badge ${bcls}">${blab}</span>${p.n}</div>
+        <div class="pmeta">${p.r} · ${p.a}${p.p?" · "+p.p:""}</div>
+      </div>
+      <div class="seg">${segBtns}</div>
+      <button class="clr" title="Quitar talla" ${sel?"":"hidden"}>&times;</button>`;
+    const seg=row.querySelector(".seg");
+    seg.addEventListener("click",e=>{
+      const btn=e.target.closest("button[data-size]");if(!btn)return;
+      const size=btn.dataset.size;
+      setSize(row,p.id,sizeState[p.id]===size?"":size);
+    });
+    row.querySelector(".clr").addEventListener("click",()=>setSize(row,p.id,""));
+    frag.appendChild(row);
+  });
+  cont.appendChild(frag);
+  applyFilters();
+}
+function setSize(row,id,size){
+  if(size){sizeState[id]=size;}else{delete sizeState[id];}
+  row.querySelectorAll(".seg button").forEach(b=>b.classList.toggle("sel",b.dataset.size===size));
+  row.querySelector(".clr").hidden=!size;
+  row.classList.toggle("done",!!size);
+  row.dataset.done=size?"1":"0";
+  const stat=document.getElementById("f-status").value;
+  if(stat!=="all") applyFilters(); else updateCounter();
+  recalcResumen();
+  persistOne(id,size);
+}
+
+function applyFilters(){
+  const q=document.getElementById("search-p").value.trim().toLowerCase();
+  const reg=document.getElementById("f-region").value.toLowerCase();
+  const area=document.getElementById("f-area").value.toLowerCase();
+  const stat=document.getElementById("f-status").value;
+  let shown=0;
+  document.querySelectorAll("#plist .prow").forEach(r=>{
+    let ok=true;
+    if(reg && r.dataset.region!==reg) ok=false;
+    if(area && r.dataset.area!==area) ok=false;
+    if(q && !r.dataset.name.includes(q)) ok=false;
+    if(stat==="pend" && r.dataset.done==="1") ok=false;
+    if(stat==="done" && r.dataset.done==="0") ok=false;
+    r.style.display=ok?"":"none";
+    if(ok)shown++;
+  });
+  const list=document.getElementById("plist");
+  let e=document.getElementById("empty-msg");
+  if(shown===0){
+    if(!e){e=document.createElement("div");e.id="empty-msg";e.className="empty";e.textContent="No hay personas que coincidan con estos filtros.";list.appendChild(e);}
+    e.style.display="";
+  }else if(e){e.style.display="none";}
+  updateCounter(shown);
+}
+function updateCounter(shown){
+  if(shown===undefined){shown=[...document.querySelectorAll("#plist .prow")].filter(r=>r.style.display!=="none").length;}
+  document.getElementById("cnt-shown").textContent=shown;
+  document.getElementById("cnt-total").textContent=PEOPLE.length;
+  document.getElementById("cnt-pend").textContent=PEOPLE.length-Object.keys(sizeState).length;
+}
+
+// ---------- resumen ----------
+function recalcResumen(){
+  const totals={};SEXES.concat(["Otro"]).forEach(sx=>{totals[sx]={};SIZES.forEach(s=>totals[sx][s]=0);});
+  PEOPLE.forEach(p=>{const s=sizeState[p.id];if(!s)return;const sx=totals[p.s]?p.s:"Otro";totals[sx][s]++;});
+  const grand={};SIZES.forEach(s=>grand[s]=0);let gAll=0;let html="";
+  const map={"Mujer":"m","Hombre":"h","Otro":"o"};
+  ["Mujer","Hombre"].forEach(sx=>{
+    let rt=0;const cells=SIZES.map(s=>{rt+=totals[sx][s];grand[s]+=totals[sx][s];return `<td>${totals[sx][s]}</td>`;}).join("");
+    gAll+=rt;html+=`<tr><td><span class="badge ${map[sx]}">${map[sx].toUpperCase()}</span> ${sx}</td>${cells}<td class="big">${rt}</td></tr>`;
+  });
+  // fila "Otro" solo si aplica
+  let ot=0;SIZES.forEach(s=>ot+=totals["Otro"][s]);
+  if(ot>0){const cells=SIZES.map(s=>{grand[s]+=totals["Otro"][s];return `<td>${totals["Otro"][s]}</td>`;}).join("");gAll+=ot;html+=`<tr><td>Sin sexo definido</td>${cells}<td class="big">${ot}</td></tr>`;}
+  html+=`<tr class="tot"><td>Total general</td>${SIZES.map(s=>`<td>${grand[s]}</td>`).join("")}<td class="big">${gAll}</td></tr>`;
+  document.getElementById("res-body").innerHTML=html;
+}
+function renderResHead(){
+  document.getElementById("res-head").innerHTML=`<tr><th>Sexo</th>${SIZES.map(s=>`<th>${s}</th>`).join("")}<th>Total</th></tr>`;
+}
+
+// ---------- export ----------
+function buildDetail(){
+  const rows=[["Nombre","Región","Departamento","Sexo","Puesto","Talla"]];
+  PEOPLE.forEach(p=>rows.push([p.n,p.r,p.a,p.s,p.p,sizeState[p.id]||""]));
+  return rows;
+}
+function buildResumen(){
+  const totals={};["Mujer","Hombre","Otro"].forEach(sx=>{totals[sx]={};SIZES.forEach(s=>totals[sx][s]=0);});
+  PEOPLE.forEach(p=>{const s=sizeState[p.id];if(!s)return;const sx=totals[p.s]?p.s:"Otro";totals[sx][s]++;});
+  const rows=[["Sexo",...SIZES,"Total"]];const grand={};SIZES.forEach(s=>grand[s]=0);let gAll=0;
+  ["Mujer","Hombre","Otro"].forEach(sx=>{
+    let t=0;const c=SIZES.map(s=>{t+=totals[sx][s];grand[s]+=totals[sx][s];return totals[sx][s];});
+    if(sx==="Otro"&&t===0)return;gAll+=t;rows.push([sx,...c,t]);
+  });
+  rows.push(["Total general",...SIZES.map(s=>grand[s]),gAll]);
+  return rows;
+}
+function exportXLSX(){
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(buildResumen()),"Resumen");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(buildDetail()),"Detalle por persona");
+  XLSX.writeFile(wb,"pedido_playeras.xlsx");
+}
+function exportCSV(){
+  const csv=buildDetail().map(r=>r.map(c=>{c=String(c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c;}).join(",")).join("\n");
+  const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8;"});
+  const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="pedido_playeras.csv";a.click();URL.revokeObjectURL(url);
+}
+
+// ---------- wiring ----------
+function initEvents(){
+  document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");document.getElementById("view-"+t.dataset.view).classList.add("active");
+  }));
+  document.getElementById("search-c").addEventListener("input",e=>applySearchConteo(e.target.value));
+  document.getElementById("expand-all").addEventListener("click",()=>document.querySelectorAll(".region").forEach(d=>d.classList.add("open")));
+  document.getElementById("collapse-all").addEventListener("click",()=>document.querySelectorAll(".region").forEach(d=>d.classList.remove("open")));
+  document.getElementById("search-p").addEventListener("input",applyFilters);
+  document.getElementById("f-region").addEventListener("change",e=>{populateAreas(e.target.value);applyFilters();});
+  document.getElementById("f-area").addEventListener("change",applyFilters);
+  document.getElementById("f-status").addEventListener("change",applyFilters);
+  document.getElementById("export-xlsx").addEventListener("click",exportXLSX);
+  document.getElementById("export-csv").addEventListener("click",exportCSV);
+  document.getElementById("refresh").addEventListener("click",async()=>{
+    const b=document.getElementById("refresh");b.disabled=true;b.textContent="Actualizando…";
+    await syncFromRemote();
+    b.disabled=false;b.textContent="Actualizar";
+  });
+  document.getElementById("reset").addEventListener("click",async()=>{
+    if(!confirm("Esto borra TODAS las tallas de la base compartida, para todos. El conteo de personas no cambia. ¿Continuar?")) return;
+    const old={...sizeState};
+    sizeState={};
+    if(dbOK){ try{ await sb.from('tallas').delete().neq('person_id',''); }catch(e){ setSaveState("error"); } }
+    applyStateToDOM(old,{});
+    refreshCountsAndResumen();setSaveState("saved");
+  });
+}
+
+// ---------- pantalla de acceso ----------
+function initGate(startApp){
+  const gate=document.getElementById("gate");
+  const input=document.getElementById("gate-input");
+  const err=document.getElementById("gate-err");
+  const btn=document.getElementById("gate-btn");
+  // si ya entró en esta sesión, no volver a pedir
+  if(sessionStorage.getItem("gate_ok")==="1"){ gate.classList.add("hidden"); startApp(); return; }
+  function tryEnter(){
+    if(input.value===ACCESS_CODE){
+      sessionStorage.setItem("gate_ok","1");
+      gate.classList.add("hidden");
+      startApp();
+    }else{
+      err.textContent="Contraseña incorrecta.";
+      input.value="";input.focus();
+    }
+  }
+  btn.addEventListener("click",tryEnter);
+  input.addEventListener("keydown",e=>{ if(e.key==="Enter") tryEnter(); });
+  input.focus();
+}
+
+async function startApp(){
+  fillSummary();
+  renderConteo();
+  renderResHead();
+  initSupabase();
+  await loadState();
+  fillFilters();
+  renderPeople();
+  recalcResumen();
+  initEvents();
+  subscribeRealtime();
+  setSaveState(dbOK ? "saved" : "local");
+}
+
+initGate(startApp);
+</script>
+</body>
+</html>
