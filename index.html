@@ -131,7 +131,7 @@
   .emp-save{width:100%;background:var(--cobalt);color:#20252c;border:none;border-radius:10px;padding:12px;font:inherit;font-weight:700;cursor:pointer}
   .emp-save:hover{background:#ff8a33}
   .emp-save:disabled{background:#3a424c;color:#7a828d;cursor:default}
-  .emp-saved{display:flex;align-items:center;justify-content:center;gap:10px;background:rgba(253,115,14,.15);color:var(--cobalt);border-radius:10px;padding:12px;font-weight:600}
+  .emp-saved{display:flex;align-items:center;justify-content:center;gap:10px;background:rgba(253,115,14,.15);color:#fff;border-radius:10px;padding:12px;font-weight:600}
   .emp-edit{appearance:none;border:1px solid #454d57;background:#2b323b;cursor:pointer;border-radius:9px;padding:8px 10px;display:inline-flex;align-items:center;gap:6px;color:#e7e9ec;font:inherit;font-weight:600;font-size:13px;margin-left:6px}
   .emp-edit:hover{border-color:var(--cobalt);color:var(--cobalt)}
   .emp-exit{margin-top:16px;background:none;border:none;color:var(--muted);cursor:pointer;font:inherit;font-size:13px;border-bottom:1px dotted var(--muted)}
@@ -183,7 +183,7 @@
     <div class="eyebrow">Queremos conocer tu talla</div>
     <!-- modo empleado -->
     <div id="gate-emp">
-      <h2>Registra tu talla</h2>
+      <h2>Bienvenido</h2>
       <p>Escribe tu correo institucional para ver y elegir tu talla.</p>
       <input id="gate-email" type="email" placeholder="tucorreo@empresa.mx" autocomplete="off">
       <div class="err" id="gate-err"></div>
@@ -206,7 +206,7 @@
 <div id="emp-view" style="display:none">
   <div class="emp-wrap">
     <div class="eyebrow" style="color:var(--cobalt)">Queremos conocer tu talla</div>
-    <h1 class="emp-title">Tu talla</h1>
+    <h1 class="emp-title" style="display:none"></h1>
     <div class="emp-card wm" id="emp-card"></div>
     <button class="emp-exit" id="emp-exit">Salir</button>
   </div>
